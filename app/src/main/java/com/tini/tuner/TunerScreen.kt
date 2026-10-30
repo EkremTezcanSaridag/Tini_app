@@ -515,7 +515,7 @@ fun HeadstockStringSelector(
         ) {
             strings.forEachIndexed { index, name ->
                 StringPeg(
-                    number = index + 1,
+                    number = 6 - index,
                     note = name,
                     isSelected = index == selectedIndex,
                     isTuned = index == selectedIndex && tuningState?.isInTune == true,
@@ -546,64 +546,62 @@ fun StringPeg(
         label = "check"
     )
     
-    Box(
+    Surface(
+        onClick = onClick,
         modifier = Modifier
             .scale(scale)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .background(
-                brush = if (isSelected) {
-                    Brush.verticalGradient(
-                        colors = listOf(GradientStart, GradientEnd)
-                    )
-                } else {
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF2A2A3A),
-                            Color(0xFF1E1E2E)
-                        )
-                    )
-                }
-            )
-            .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(horizontal = 12.dp, vertical = 16.dp),
-        contentAlignment = Alignment.Center
+            .padding(2.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = if (isSelected) {
+            GradientStart
+        } else {
+            Color(0xFF252535)
+        },
+        border = BorderStroke(
+            width = if (isSelected) 2.dp else 1.dp,
+            color = if (isSelected) {
+                Color.White.copy(alpha = 0.4f)
+            } else {
+                Color.White.copy(alpha = 0.15f)
+            }
+        )
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 18.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = number.toString(),
-                fontSize = 13.sp,
-                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = note,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.85f)
-            )
-        }
-        
-        if (isTuned && checkScale > 0) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Akortlu",
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 4.dp, y = (-4).dp)
-                    .scale(checkScale)
-                    .size(20.dp)
-                    .background(AccentGreen, CircleShape)
-                    .padding(2.dp),
-                tint = Color.White
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = number.toString(),
+                    fontSize = 13.sp,
+                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = note,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.85f)
+                )
+            }
+            
+            if (isTuned && checkScale > 0) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Akortlu",
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 6.dp, y = (-6).dp)
+                        .scale(checkScale)
+                        .size(22.dp)
+                        .background(AccentGreen, CircleShape)
+                        .padding(3.dp),
+                    tint = Color.White
+                )
+            }
         }
     }
 }
