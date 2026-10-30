@@ -279,7 +279,7 @@ fun PremiumGauge(
     )
     
     val inTuneScale by animateFloatAsState(
-        targetValue = if (tuningState?.isInTune == true) 1.1f else 1f,
+        targetValue = if (tuningState?.isInTune == true) 1.05f else 1f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMedium
@@ -287,149 +287,167 @@ fun PremiumGauge(
         label = "scale"
     )
     
-    Box(
+    Column(
         modifier = modifier,
-        contentAlignment = Alignment.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (isListening) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isListening) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val centerX = size.width / 2
+                    val centerY = size.height * 0.7f
+                    val maxRadius = min(size.width, size.height * 0.7f) * 0.9f
+                    
+                    for (i in 1..3) {
+                        drawCircle(
+                            color = GradientStart.copy(alpha = pulseAlpha / (i * 2)),
+                            radius = maxRadius * (1f + i * 0.1f),
+                            center = Offset(centerX, centerY),
+                            style = Stroke(width = 2f)
+                        )
+                    }
+                }
+            }
+            
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.2f)
+            ) {
                 val centerX = size.width / 2
-                val centerY = size.height / 2
-                val maxRadius = min(size.width, size.height) / 2
+                val centerY = size.height * 0.7f
+                val radius = min(size.width, size.height * 0.7f) * 0.85f
                 
-                for (i in 1..3) {
-                    drawCircle(
-                        color = GradientStart.copy(alpha = pulseAlpha / (i * 2)),
-                        radius = maxRadius * 0.9f * (1f + i * 0.1f),
-                        center = Offset(centerX, centerY),
-                        style = Stroke(width = 2f)
+                val startAngle = 150f
+                val sweepAngle = 240f
+                
+                for (segment in 0..100) {
+                    val segmentAngle = startAngle + segment * sweepAngle / 100f
+                    val nextAngle = startAngle + (segment + 1) * sweepAngle / 100f
+                    
+                    val normalizedPos = (segment - 50f) / 50f
+                    val segmentColor = when {
+                        abs(normalizedPos) < 0.2f -> AccentGreen
+                        abs(normalizedPos) < 0.6f -> AccentYellow
+                        else -> AccentRed
+                    }
+                    
+                    val innerRadius = radius - 40f
+                    val outerRadius = radius
+                    
+                    val x1 = centerX + innerRadius * cos(Math.toRadians(segmentAngle.toDouble())).toFloat()
+                    val y1 = centerY + innerRadius * sin(Math.toRadians(segmentAngle.toDouble())).toFloat()
+                    val x2 = centerX + outerRadius * cos(Math.toRadians(segmentAngle.toDouble())).toFloat()
+                    val y2 = centerY + outerRadius * sin(Math.toRadians(segmentAngle.toDouble())).toFloat()
+                    
+                    drawLine(
+                        color = segmentColor.copy(alpha = 0.4f),
+                        start = Offset(x1, y1),
+                        end = Offset(x2, y2),
+                        strokeWidth = 5f
                     )
                 }
+                
+                for (i in -50..50 step 10) {
+                    val angle = startAngle + (i + 50) * sweepAngle / 100
+                    val isMainTick = i % 20 == 0
+                    val startRadius = if (isMainTick) radius - 30f else radius - 18f
+                    val endRadius = radius
+                    
+                    val startX = centerX + startRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
+                    val startY = centerY + startRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
+                    val endX = centerX + endRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
+                    val endY = centerY + endRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
+                    
+                    drawLine(
+                        color = Color.White.copy(alpha = if (isMainTick) 0.6f else 0.3f),
+                        start = Offset(startX, startY),
+                        end = Offset(endX, endY),
+                        strokeWidth = if (isMainTick) 4f else 2f,
+                        cap = StrokeCap.Round
+                    )
+                }
+                
+                val needleAngle = startAngle + (needleRotation + 50) * sweepAngle / 100
+                val needleLength = radius * 0.75f
+                
+                val needleColor = when {
+                    tuningState?.isInTune == true -> AccentGreen
+                    (tuningState?.cents ?: 0f) < 0 -> AccentRed
+                    else -> AccentYellow
+                }
+                
+                val needleEndX = centerX + needleLength * cos(Math.toRadians(needleAngle.toDouble())).toFloat()
+                val needleEndY = centerY + needleLength * sin(Math.toRadians(needleAngle.toDouble())).toFloat()
+                
+                if (tuningState?.isInTune == true) {
+                    for (glowRadius in listOf(50f, 35f, 20f)) {
+                        drawCircle(
+                            color = needleColor.copy(alpha = 0.15f),
+                            radius = glowRadius,
+                            center = Offset(needleEndX, needleEndY)
+                        )
+                    }
+                }
+                
+                drawLine(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color.White.copy(alpha = 0.8f), needleColor),
+                        start = Offset(centerX, centerY),
+                        end = Offset(needleEndX, needleEndY)
+                    ),
+                    start = Offset(centerX, centerY),
+                    end = Offset(needleEndX, needleEndY),
+                    strokeWidth = 10f,
+                    cap = StrokeCap.Round
+                )
+                
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color.White, Color.White.copy(alpha = 0.7f))
+                    ),
+                    radius = 20f,
+                    center = Offset(centerX, centerY)
+                )
+                
+                drawCircle(
+                    color = CardBackground,
+                    radius = 14f,
+                    center = Offset(centerX, centerY)
+                )
             }
         }
         
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp)
-        ) {
-            val centerX = size.width / 2
-            val centerY = size.height / 2
-            val radius = min(size.width, size.height) / 2
-            val arcRadius = radius * 0.85f
-            
-            val startAngle = 150f
-            val sweepAngle = 240f
-            
-            drawArc(
-                brush = Brush.sweepGradient(
-                    0f to AccentRed.copy(alpha = 0.3f),
-                    0.4f to AccentYellow.copy(alpha = 0.3f),
-                    0.5f to AccentGreen.copy(alpha = 0.3f),
-                    0.6f to AccentYellow.copy(alpha = 0.3f),
-                    1f to AccentRed.copy(alpha = 0.3f),
-                    center = Offset(centerX, centerY)
-                ),
-                startAngle = startAngle,
-                sweepAngle = sweepAngle,
-                useCenter = false,
-                style = Stroke(width = 40f, cap = StrokeCap.Round),
-                topLeft = Offset(centerX - arcRadius, centerY - arcRadius),
-                size = androidx.compose.ui.geometry.Size(arcRadius * 2, arcRadius * 2)
-            )
-            
-            for (i in -50..50 step 10) {
-                val angle = startAngle + (i + 50) * sweepAngle / 100
-                val startRadius = if (i % 20 == 0) arcRadius - 25f else arcRadius - 15f
-                val endRadius = arcRadius
-                
-                val startX = centerX + startRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
-                val startY = centerY + startRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
-                val endX = centerX + endRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
-                val endY = centerY + endRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
-                
-                drawLine(
-                    color = Color.White.copy(alpha = 0.4f),
-                    start = Offset(startX, startY),
-                    end = Offset(endX, endY),
-                    strokeWidth = if (i % 20 == 0) 3f else 2f,
-                    cap = StrokeCap.Round
-                )
-            }
-            
-            val needleAngle = startAngle + (needleRotation + 50) * sweepAngle / 100
-            val needleLength = arcRadius * 0.7f
-            
-            val needleColor = when {
-                tuningState?.isInTune == true -> AccentGreen
-                (tuningState?.cents ?: 0f) < 0 -> AccentRed
-                else -> AccentYellow
-            }
-            
-            val needleEndX = centerX + needleLength * cos(Math.toRadians(needleAngle.toDouble())).toFloat()
-            val needleEndY = centerY + needleLength * sin(Math.toRadians(needleAngle.toDouble())).toFloat()
-            
-            if (tuningState?.isInTune == true) {
-                drawCircle(
-                    color = needleColor.copy(alpha = 0.3f),
-                    radius = 40f,
-                    center = Offset(needleEndX, needleEndY),
-                    blendMode = BlendMode.Plus
-                )
-            }
-            
-            drawLine(
-                brush = Brush.linearGradient(
-                    colors = listOf(Color.White.copy(alpha = 0.8f), needleColor),
-                    start = Offset(centerX, centerY),
-                    end = Offset(needleEndX, needleEndY)
-                ),
-                start = Offset(centerX, centerY),
-                end = Offset(needleEndX, needleEndY),
-                strokeWidth = 8f,
-                cap = StrokeCap.Round
-            )
-            
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color.White, Color.White.copy(alpha = 0.5f))
-                ),
-                radius = 18f,
-                center = Offset(centerX, centerY)
-            )
-            
-            drawCircle(
-                color = CardBackground,
-                radius = 12f,
-                center = Offset(centerX, centerY)
-            )
-        }
+        Spacer(modifier = Modifier.height(16.dp))
         
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = (-20).dp)
-                .scale(inTuneScale)
+            modifier = Modifier.scale(inTuneScale)
         ) {
             Text(
                 text = note ?: "--",
-                fontSize = 72.sp,
+                fontSize = 80.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                letterSpacing = 2.sp
             )
             
             if (frequency != null) {
                 Text(
                     text = "%.1f Hz".format(frequency),
-                    fontSize = 20.sp,
+                    fontSize = 22.sp,
                     color = Color.White.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Medium
                 )
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             val centsColor = when {
                 tuningState?.isInTune == true -> AccentGreen
@@ -442,10 +460,12 @@ fun PremiumGauge(
                     val sign = if (cents > 0) "+" else ""
                     "$sign${cents.toInt()} cent"
                 } else "-- cent",
-                fontSize = 24.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = centsColor
             )
+            
+            Spacer(modifier = Modifier.height(12.dp))
             
             if (tuningState != null) {
                 val instruction = when (tuningState.direction) {
@@ -454,19 +474,20 @@ fun PremiumGauge(
                     TuningDirection.IN_TUNE -> "Akortlu ✓"
                 }
                 
-                Text(
-                    text = instruction,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = centsColor,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .background(
-                            color = centsColor.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(20.dp)
-                        )
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
-                )
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = centsColor.copy(alpha = 0.2f),
+                    border = BorderStroke(2.dp, centsColor),
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                ) {
+                    Text(
+                        text = instruction,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = centsColor,
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 12.dp)
+                    )
+                }
             }
         }
     }
@@ -514,7 +535,7 @@ fun StringPeg(
     onClick: () -> Unit
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.1f else 1f,
+        targetValue = if (isSelected) 1.08f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "scale"
     )
@@ -538,15 +559,15 @@ fun StringPeg(
                 } else {
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.1f),
-                            Color.White.copy(alpha = 0.05f)
+                            Color(0xFF2A2A3A),
+                            Color(0xFF1E1E2E)
                         )
                     )
                 }
             )
             .border(
                 width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) Color.White.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f),
+                color = if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.15f),
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(horizontal = 12.dp, vertical = 16.dp),
@@ -557,16 +578,16 @@ fun StringPeg(
         ) {
             Text(
                 text = number.toString(),
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = if (isSelected) 1f else 0.5f),
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                fontSize = 13.sp,
+                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = note,
-                fontSize = 22.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White.copy(alpha = if (isSelected) 1f else 0.7f)
+                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.85f)
             )
         }
         
