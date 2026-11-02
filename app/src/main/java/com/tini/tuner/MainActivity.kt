@@ -25,6 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.foundation.isSystemInDarkTheme
 
 enum class Screen {
     Tuner,
@@ -37,6 +41,7 @@ class MainActivity : ComponentActivity() {
     private var hasAudioPermission by mutableStateOf(false)
     private var viewModel: TunerViewModel? = null
     private lateinit var historyRepository: TuningHistoryRepository
+    private lateinit var themeRepository: ThemeRepository
     
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -54,12 +59,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         historyRepository = TuningHistoryRepository(applicationContext)
+        themeRepository = ThemeRepository(applicationContext)
         
         hasAudioPermission = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == 
                 android.content.pm.PackageManager.PERMISSION_GRANTED
         
         setContent {
-            TiniTheme {
+            val themeMode by themeRepository.themeModeFlow.collectAsState(initial = ThemeMode.LIGHT)
+            val isSystemInDark = isSystemInDarkTheme()
+            val isDark = when (themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDark
+            }
+            
+            TiniTheme(isDark = isDark) {
                 var currentScreen by remember { mutableStateOf<Screen>(Screen.Tuner) }
                 
                 Surface(
@@ -90,7 +104,8 @@ class MainActivity : ComponentActivity() {
                                     onTuningChanged = { vm.setTuning(it) },
                                     onA4ReferenceChanged = { vm.setA4Reference(it) },
                                     onMetronomeClick = { currentScreen = Screen.Metronome },
-                                    onHistoryClick = { currentScreen = Screen.History }
+                                    onHistoryClick = { currentScreen = Screen.History },
+                                    themeRepository = themeRepository
                                 )
                             } else {
                                 ProfessionalPermissionScreen(
@@ -139,35 +154,84 @@ val InterFont = FontFamily(
     Font(R.font.inter_light, FontWeight.Light)
 )
 
-object AppColors {
-    // Apple-style minimal white theme
-    val Background = Color(0xFFFAFAFA)
-    val Surface = Color(0xFFFFFFFF)
-    val SurfaceSecondary = Color(0xFFF5F5F7)
-    val TextPrimary = Color(0xFF1D1D1F)
-    val TextSecondary = Color(0xFF86868B)
-    val AccentBlue = Color(0xFF007AFF)
-    val AccentGreen = Color(0xFF34C759)
-    val AccentOrange = Color(0xFFFF9500)
-    val AccentRed = Color(0xFFFF3B30)
-    val Separator = Color(0xFFE5E5E5)
+interface AppColorsScheme {
+    val Background: Color
+    val Surface: Color
+    val SurfaceSecondary: Color
+    val TextPrimary: Color
+    val TextSecondary: Color
+    val AccentBlue: Color
+    val AccentGreen: Color
+    val AccentOrange: Color
+    val AccentRed: Color
+    val Separator: Color
 }
 
+object AppColorsLight : AppColorsScheme {
+    override val Background = Color(0xFFFAFAFA)
+    override val Surface = Color(0xFFFFFFFF)
+    override val SurfaceSecondary = Color(0xFFF5F5F7)
+    override val TextPrimary = Color(0xFF1D1D1F)
+    override val TextSecondary = Color(0xFF86868B)
+    override val AccentBlue = Color(0xFF007AFF)
+    override val AccentGreen = Color(0xFF34C759)
+    override val AccentOrange = Color(0xFFFF9500)
+    override val AccentRed = Color(0xFFFF3B30)
+    override val Separator = Color(0xFFE5E5E5)
+}
+
+object AppColorsDark : AppColorsScheme {
+    override val Background = Color(0xFF000000)
+    override val Surface = Color(0xFF1C1C1E)
+    override val SurfaceSecondary = Color(0xFF2C2C2E)
+    override val TextPrimary = Color(0xFFFFFFFF)
+    override val TextSecondary = Color(0xFF98989D)
+    override val AccentBlue = Color(0xFF007AFF)
+    override val AccentGreen = Color(0xFF34C759)
+    override val AccentOrange = Color(0xFFFF9500)
+    override val AccentRed = Color(0xFFFF3B30)
+    override val Separator = Color(0xFF38383A)
+}
+
+private val LocalIsDark = compositionLocalOf { false }
+
+val AppColors: AppColorsScheme
+    @Composable
+    @ReadOnlyComposable
+    get() = if (LocalIsDark.current) AppColorsDark else AppColorsLight
+
 @Composable
-fun TiniTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = AppColors.AccentBlue,
-            secondary = AppColors.AccentGreen,
-            background = AppColors.Background,
-            surface = AppColors.Surface,
-            onPrimary = Color.White,
-            onSecondary = Color.White,
-            onBackground = AppColors.TextPrimary,
-            onSurface = AppColors.TextPrimary
-        ),
-        content = content
-    )
+fun TiniTheme(isDark: Boolean = false, content: @Composable () -> Unit) {
+    val colors = if (isDark) AppColorsDark else AppColorsLight
+    
+    CompositionLocalProvider(LocalIsDark provides isDark) {
+        MaterialTheme(
+            colorScheme = if (isDark) {
+                darkColorScheme(
+                    primary = colors.AccentBlue,
+                    secondary = colors.AccentGreen,
+                    background = colors.Background,
+                    surface = colors.Surface,
+                    onPrimary = Color.White,
+                    onSecondary = Color.White,
+                    onBackground = colors.TextPrimary,
+                    onSurface = colors.TextPrimary
+                )
+            } else {
+                lightColorScheme(
+                    primary = colors.AccentBlue,
+                    secondary = colors.AccentGreen,
+                    background = colors.Background,
+                    surface = colors.Surface,
+                    onPrimary = Color.White,
+                    onSecondary = Color.White,
+                    onBackground = colors.TextPrimary,
+                    onSurface = colors.TextPrimary
+                )
+            },
+            content = content
+        )
+    }
 }
 
 @Composable

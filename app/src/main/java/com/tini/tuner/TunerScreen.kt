@@ -44,7 +44,8 @@ fun TunerScreen(
     onTuningChanged: (TuningType) -> Unit,
     onA4ReferenceChanged: (Float) -> Unit,
     onMetronomeClick: () -> Unit = {},
-    onHistoryClick: () -> Unit = {}
+    onHistoryClick: () -> Unit = {},
+    themeRepository: ThemeRepository? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -181,7 +182,8 @@ fun TunerScreen(
                         sheetState.hide()
                         showSettingsSheet = false
                     }
-                }
+                },
+                themeRepository = themeRepository
             )
         }
     }
@@ -410,6 +412,12 @@ fun HorizontalCentRuler(
     cents: Float,
     isInTune: Boolean
 ) {
+    val colors = AppColors
+    val accentGreen = colors.AccentGreen
+    val accentRed = colors.AccentRed
+    val accentOrange = colors.AccentOrange
+    val textSecondary = colors.TextSecondary
+    
     Canvas(
         modifier = Modifier
             .fillMaxWidth(0.85f)
@@ -427,9 +435,9 @@ fun HorizontalCentRuler(
             val isCenter = tick == 0
             val tickHeight = if (isCenter) 32f else if (isMajor) 24f else 16f
             val tickColor = if (isCenter) {
-                AppColors.AccentGreen.copy(alpha = 0.6f)
+                accentGreen.copy(alpha = 0.6f)
             } else {
-                AppColors.TextSecondary.copy(alpha = 0.4f)
+                textSecondary.copy(alpha = 0.4f)
             }
             
             drawLine(
@@ -463,9 +471,9 @@ fun HorizontalCentRuler(
         // Draw indicator pill with soft halo
         val indicatorX = centerX + (cents / 50f) * (width / 2 * 0.95f)
         val indicatorColor = when {
-            isInTune -> AppColors.AccentGreen
-            cents < 0 -> AppColors.AccentRed
-            else -> AppColors.AccentOrange
+            isInTune -> accentGreen
+            cents < 0 -> accentRed
+            else -> accentOrange
         }
         
         // Soft halo effect
@@ -710,9 +718,13 @@ fun MinimalTuningSheet(
 fun MinimalSettingsSheet(
     currentA4: Float,
     onA4Changed: (Float) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    themeRepository: ThemeRepository? = null
 ) {
     var sliderValue by remember { mutableFloatStateOf(currentA4) }
+    val currentTheme by (themeRepository?.themeModeFlow?.collectAsState(initial = ThemeMode.LIGHT) ?: remember { mutableStateOf(ThemeMode.LIGHT) })
+    val scope = rememberCoroutineScope()
+    val colors = AppColors
     
     Column(
         modifier = Modifier
@@ -723,16 +735,67 @@ fun MinimalSettingsSheet(
             text = "Ayarlar",
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
-            color = AppColors.TextPrimary,
+            color = colors.TextPrimary,
             fontFamily = InterFont,
             modifier = Modifier.padding(bottom = 20.dp)
         )
+        
+        // Theme Selection
+        Text(
+            text = "Tema",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.TextSecondary,
+            fontFamily = InterFont
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.SurfaceSecondary)
+                .padding(2.dp)
+        ) {
+            ThemeMode.values().forEach { mode ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (currentTheme == mode) colors.Surface else Color.Transparent)
+                        .clickable {
+                            scope.launch {
+                                themeRepository?.setThemeMode(mode)
+                            }
+                        }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = when (mode) {
+                            ThemeMode.LIGHT -> "Açık"
+                            ThemeMode.DARK -> "Koyu"
+                            ThemeMode.SYSTEM -> "Sistem"
+                        },
+                        fontSize = 13.sp,
+                        fontWeight = if (currentTheme == mode) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (currentTheme == mode) colors.TextPrimary else colors.TextSecondary,
+                        fontFamily = InterFont
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        Divider(color = colors.Separator, thickness = 0.5.dp)
+        Spacer(modifier = Modifier.height(24.dp))
         
         Text(
             text = "A4 Referans Frekansı",
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = AppColors.TextSecondary,
+            color = colors.TextSecondary,
             fontFamily = InterFont
         )
         
@@ -742,7 +805,7 @@ fun MinimalSettingsSheet(
             text = "${sliderValue.toInt()} Hz",
             fontSize = 32.sp,
             fontWeight = FontWeight.SemiBold,
-            color = AppColors.TextPrimary,
+            color = colors.TextPrimary,
             fontFamily = InterFont,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
@@ -755,9 +818,9 @@ fun MinimalSettingsSheet(
             valueRange = 430f..450f,
             steps = 19,
             colors = SliderDefaults.colors(
-                thumbColor = AppColors.AccentBlue,
-                activeTrackColor = AppColors.AccentBlue,
-                inactiveTrackColor = AppColors.Separator
+                thumbColor = colors.AccentBlue,
+                activeTrackColor = colors.AccentBlue,
+                inactiveTrackColor = colors.Separator
             )
         )
         
@@ -765,8 +828,8 @@ fun MinimalSettingsSheet(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("430 Hz", color = AppColors.TextSecondary, fontSize = 12.sp, fontFamily = InterFont)
-            Text("450 Hz", color = AppColors.TextSecondary, fontSize = 12.sp, fontFamily = InterFont)
+            Text("430 Hz", color = colors.TextSecondary, fontSize = 12.sp, fontFamily = InterFont)
+            Text("450 Hz", color = colors.TextSecondary, fontSize = 12.sp, fontFamily = InterFont)
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -781,7 +844,7 @@ fun MinimalSettingsSheet(
                 .height(50.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = AppColors.AccentBlue,
+                containerColor = colors.AccentBlue,
                 contentColor = Color.White
             )
         ) {
