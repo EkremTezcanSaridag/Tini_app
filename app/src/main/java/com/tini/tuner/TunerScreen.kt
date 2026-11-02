@@ -1,9 +1,9 @@
 package com.tini.tuner
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,33 +12,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlin.math.*
-
-val GradientStart = Color(0xFF6366F1)
-val GradientEnd = Color(0xFF8B5CF6)
-val DarkBackground = Color(0xFF0F0F14)
-val CardBackground = Color(0xFF1A1A24)
-val AccentGreen = Color(0xFF10B981)
-val AccentRed = Color(0xFFEF4444)
-val AccentYellow = Color(0xFFF59E0B)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,81 +46,102 @@ fun TunerScreen(
     var showTuningSheet by remember { mutableStateOf(false) }
     var showSettingsSheet by remember { mutableStateOf(false) }
     
-    val brush = remember {
-        Brush.verticalGradient(
-            colors = listOf(DarkBackground, Color(0xFF1A1A28))
-        )
+    val view = LocalView.current
+    var lastHapticTime by remember { mutableStateOf(0L) }
+    
+    // Haptic feedback on in-tune
+    LaunchedEffect(uiState.tuningState?.isInTune) {
+        if (uiState.tuningState?.isInTune == true) {
+            val now = System.currentTimeMillis()
+            if (now - lastHapticTime > 1000) { // Limit to once per second
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                lastHapticTime = now
+            }
+        }
     }
     
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(brush)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(AppColors.Background, AppColors.Surface)
+                )
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TopBar(
+            // Top bar
+            ProfessionalTopBar(
                 tuningName = uiState.currentTuning.displayName,
-                a4Reference = uiState.a4Reference,
                 onTuningClick = { showTuningSheet = true },
                 onSettingsClick = { showSettingsSheet = true }
             )
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            PremiumGauge(
-                tuningState = uiState.tuningState,
-                note = uiState.tuningState?.note,
-                frequency = uiState.detectedFrequency,
-                cents = uiState.tuningState?.cents,
-                isListening = uiState.isListening,
+            // Main tuner gauge
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-            )
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                ProfessionalGauge(
+                    tuningState = uiState.tuningState,
+                    note = uiState.tuningState?.note,
+                    frequency = uiState.detectedFrequency,
+                    cents = uiState.tuningState?.cents,
+                    isListening = uiState.isListening
+                )
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            HeadstockStringSelector(
+            // String selector
+            ProfessionalStringSelector(
                 strings = getStringNames(uiState.currentTuning),
                 selectedIndex = uiState.selectedStringIndex,
-                tuningState = uiState.tuningState,
-                onStringSelected = onStringSelected,
-                autoMode = uiState.autoMode
+                isTuned = uiState.tuningState?.isInTune == true,
+                onStringSelected = onStringSelected
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            // Auto mode toggle
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(vertical = 8.dp)
             ) {
                 Text(
                     "Otomatik Algılama",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 14.sp
+                    color = AppColors.TextSecondary,
+                    fontSize = 14.sp,
+                    fontFamily = ManropeFont
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Switch(
                     checked = uiState.autoMode,
                     onCheckedChange = onAutoModeToggle,
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = AccentGreen,
-                        checkedTrackColor = AccentGreen.copy(alpha = 0.5f),
-                        uncheckedThumbColor = Color.White.copy(alpha = 0.4f),
-                        uncheckedTrackColor = Color.White.copy(alpha = 0.2f)
+                        checkedThumbColor = AppColors.AccentGreen,
+                        checkedTrackColor = AppColors.AccentGreen.copy(alpha = 0.5f),
+                        uncheckedThumbColor = AppColors.TextSecondary,
+                        uncheckedTrackColor = AppColors.Surface
                     )
                 )
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             
-            PremiumButton(
-                text = if (uiState.isListening) "Durdur" else "Dinlemeye Başla",
+            // Start/Stop button
+            ProfessionalButton(
+                text = if (uiState.isListening) "Durdur" else "Başla",
                 isListening = uiState.isListening,
                 onClick = {
                     if (uiState.isListening) {
@@ -145,125 +156,130 @@ fun TunerScreen(
         }
     }
     
+    // Tuning selection bottom sheet
     if (showTuningSheet) {
         ModalBottomSheet(
             onDismissRequest = { showTuningSheet = false },
             sheetState = sheetState,
-            containerColor = CardBackground
+            containerColor = AppColors.SurfaceElevated
         ) {
             TuningBottomSheet(
                 currentTuning = uiState.currentTuning,
                 onTuningSelected = {
                     onTuningChanged(it)
-                    scope.launch { showTuningSheet = false }
+                    scope.launch {
+                        sheetState.hide()
+                        showTuningSheet = false
+                    }
                 }
             )
         }
     }
     
+    // Settings bottom sheet
     if (showSettingsSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSettingsSheet = false },
             sheetState = sheetState,
-            containerColor = CardBackground
+            containerColor = AppColors.SurfaceElevated
         ) {
             SettingsBottomSheet(
                 currentA4 = uiState.a4Reference,
-                autoMode = uiState.autoMode,
                 onA4Changed = onA4ReferenceChanged,
-                onAutoModeChanged = onAutoModeToggle,
-                onDismiss = { scope.launch { showSettingsSheet = false } }
+                onDismiss = {
+                    scope.launch {
+                        sheetState.hide()
+                        showSettingsSheet = false
+                    }
+                }
             )
         }
     }
 }
 
 @Composable
-fun TopBar(
+fun ProfessionalTopBar(
     tuningName: String,
-    a4Reference: Float,
     onTuningClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(
-                text = "Tını",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.drawBehind {
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colors = listOf(GradientStart, GradientEnd)
-                        ),
-                        alpha = 0.15f
-                    )
-                }
-            )
-            Text(
-                text = "Profesyonel Gitar Akort",
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.6f)
-            )
-        }
+        // App name
+        Text(
+            text = "Tını",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppColors.TextPrimary,
+            fontFamily = ManropeFont
+        )
         
-        Row {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Tuning selector
             Surface(
                 onClick = onTuningClick,
-                modifier = Modifier.padding(end = 8.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = CardBackground,
-                border = BorderStroke(1.dp, GradientStart.copy(alpha = 0.3f))
+                color = AppColors.Surface,
+                border = BorderStroke(1.dp, AppColors.PrimaryIndigo.copy(alpha = 0.3f))
             ) {
-                Text(
-                    text = tuningName,
+                Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    color = GradientStart,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = "Tuning",
+                        tint = AppColors.PrimaryIndigo,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = tuningName,
+                        color = AppColors.PrimaryIndigo,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        fontFamily = ManropeFont
+                    )
+                }
             }
             
+            // Settings button
             Surface(
                 onClick = onSettingsClick,
                 modifier = Modifier.size(44.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = CardBackground,
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+                color = AppColors.Surface
             ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Ayarlar",
-                    modifier = Modifier.padding(10.dp),
-                    tint = Color.White.copy(alpha = 0.7f)
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = AppColors.TextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun PremiumGauge(
+fun ProfessionalGauge(
     tuningState: TuningState?,
     note: String?,
     frequency: Float?,
     cents: Float?,
-    isListening: Boolean,
-    modifier: Modifier = Modifier
+    isListening: Boolean
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.7f,
+        initialValue = 0.2f,
+        targetValue = 0.5f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulse"
@@ -288,25 +304,27 @@ fun PremiumGauge(
     )
     
     Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
     ) {
+        // Arc gauge
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .aspectRatio(1.5f),
             contentAlignment = Alignment.Center
         ) {
-            if (isListening) {
+            // Pulse effect when listening
+            if (isListening && tuningState != null) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val centerX = size.width / 2
-                    val centerY = size.height * 0.7f
-                    val maxRadius = min(size.width, size.height * 0.7f) * 0.9f
+                    val centerY = size.height * 0.75f
+                    val maxRadius = min(size.width, size.height * 0.75f) * 0.9f
                     
-                    for (i in 1..3) {
+                    for (i in 1..2) {
                         drawCircle(
-                            color = GradientStart.copy(alpha = pulseAlpha / (i * 2)),
-                            radius = maxRadius * (1f + i * 0.1f),
+                            color = AppColors.PrimaryIndigo.copy(alpha = pulseAlpha / (i * 2)),
+                            radius = maxRadius * (1f + i * 0.08f),
                             center = Offset(centerX, centerY),
                             style = Stroke(width = 2f)
                         )
@@ -314,145 +332,160 @@ fun PremiumGauge(
                 }
             }
             
+            // Main arc gauge canvas
             Canvas(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.2f)
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
                 val centerX = size.width / 2
-                val centerY = size.height * 0.7f
-                val radius = min(size.width, size.height * 0.7f) * 0.85f
+                val centerY = size.height * 0.75f
+                val radius = min(size.width, size.height * 0.75f) * 0.85f
                 
                 val startAngle = 150f
                 val sweepAngle = 240f
                 
+                // Draw colored arc zones
                 for (segment in 0..100) {
                     val segmentAngle = startAngle + segment * sweepAngle / 100f
-                    val nextAngle = startAngle + (segment + 1) * sweepAngle / 100f
+                    val centsPos = -50 + segment
+                    val normalizedPos = abs(centsPos) / 50f
                     
-                    val normalizedPos = (segment - 50f) / 50f
                     val segmentColor = when {
-                        abs(normalizedPos) < 0.2f -> AccentGreen
-                        abs(normalizedPos) < 0.6f -> AccentYellow
-                        else -> AccentRed
+                        abs(centsPos) < 8 -> AppColors.AccentGreen
+                        abs(centsPos) < 25 -> AppColors.PrimaryAmber
+                        else -> AppColors.AccentRed
                     }
                     
-                    val innerRadius = radius - 40f
-                    val outerRadius = radius
+                    val rad = Math.toRadians(segmentAngle.toDouble())
+                    val innerR = radius - 35f
+                    val outerR = radius
                     
-                    val x1 = centerX + innerRadius * cos(Math.toRadians(segmentAngle.toDouble())).toFloat()
-                    val y1 = centerY + innerRadius * sin(Math.toRadians(segmentAngle.toDouble())).toFloat()
-                    val x2 = centerX + outerRadius * cos(Math.toRadians(segmentAngle.toDouble())).toFloat()
-                    val y2 = centerY + outerRadius * sin(Math.toRadians(segmentAngle.toDouble())).toFloat()
+                    val x1 = centerX + innerR * cos(rad).toFloat()
+                    val y1 = centerY + innerR * sin(rad).toFloat()
+                    val x2 = centerX + outerR * cos(rad).toFloat()
+                    val y2 = centerY + outerR * sin(rad).toFloat()
                     
                     drawLine(
-                        color = segmentColor.copy(alpha = 0.4f),
+                        color = segmentColor.copy(alpha = 0.3f),
                         start = Offset(x1, y1),
                         end = Offset(x2, y2),
-                        strokeWidth = 5f
+                        strokeWidth = 6f
                     )
                 }
                 
-                for (i in -50..50 step 10) {
-                    val angle = startAngle + (i + 50) * sweepAngle / 100
-                    val isMainTick = i % 20 == 0
-                    val startRadius = if (isMainTick) radius - 30f else radius - 18f
-                    val endRadius = radius
+                // Draw tick marks
+                for (tick in -50..50 step 10) {
+                    val tickAngle = startAngle + (tick + 50) * sweepAngle / 100
+                    val rad = Math.toRadians(tickAngle.toDouble())
+                    val isMainTick = (tick % 20 == 0)
+                    val tickStartR = radius - if (isMainTick) 28f else 18f
+                    val tickEndR = radius
                     
-                    val startX = centerX + startRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
-                    val startY = centerY + startRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
-                    val endX = centerX + endRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
-                    val endY = centerY + endRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
+                    val x1 = centerX + tickStartR * cos(rad).toFloat()
+                    val y1 = centerY + tickStartR * sin(rad).toFloat()
+                    val x2 = centerX + tickEndR * cos(rad).toFloat()
+                    val y2 = centerY + tickEndR * sin(rad).toFloat()
                     
                     drawLine(
-                        color = Color.White.copy(alpha = if (isMainTick) 0.6f else 0.3f),
-                        start = Offset(startX, startY),
-                        end = Offset(endX, endY),
+                        color = Color.White.copy(alpha = if (isMainTick) 0.5f else 0.25f),
+                        start = Offset(x1, y1),
+                        end = Offset(x2, y2),
                         strokeWidth = if (isMainTick) 4f else 2f,
                         cap = StrokeCap.Round
                     )
                 }
                 
+                // Draw needle
                 val needleAngle = startAngle + (needleRotation + 50) * sweepAngle / 100
-                val needleLength = radius * 0.75f
+                val needleLength = radius * 0.7f
+                val needleRad = Math.toRadians(needleAngle.toDouble())
                 
                 val needleColor = when {
-                    tuningState?.isInTune == true -> AccentGreen
-                    (tuningState?.cents ?: 0f) < 0 -> AccentRed
-                    else -> AccentYellow
+                    tuningState?.isInTune == true -> AppColors.AccentGreen
+                    (tuningState?.cents ?: 0f) < 0 -> AppColors.AccentRed
+                    else -> AppColors.PrimaryAmber
                 }
                 
-                val needleEndX = centerX + needleLength * cos(Math.toRadians(needleAngle.toDouble())).toFloat()
-                val needleEndY = centerY + needleLength * sin(Math.toRadians(needleAngle.toDouble())).toFloat()
+                val needleEndX = centerX + needleLength * cos(needleRad).toFloat()
+                val needleEndY = centerY + needleLength * sin(needleRad).toFloat()
                 
+                // Glow effect for in-tune
                 if (tuningState?.isInTune == true) {
-                    for (glowRadius in listOf(50f, 35f, 20f)) {
+                    for (glowR in listOf(40f, 28f, 16f)) {
                         drawCircle(
-                            color = needleColor.copy(alpha = 0.15f),
-                            radius = glowRadius,
+                            color = needleColor.copy(alpha = 0.12f),
+                            radius = glowR,
                             center = Offset(needleEndX, needleEndY)
                         )
                     }
                 }
                 
+                // Needle line with gradient
                 drawLine(
                     brush = Brush.linearGradient(
-                        colors = listOf(Color.White.copy(alpha = 0.8f), needleColor),
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.8f),
+                            needleColor
+                        ),
                         start = Offset(centerX, centerY),
                         end = Offset(needleEndX, needleEndY)
                     ),
                     start = Offset(centerX, centerY),
                     end = Offset(needleEndX, needleEndY),
-                    strokeWidth = 10f,
+                    strokeWidth = 8f,
                     cap = StrokeCap.Round
                 )
                 
+                // Center knob
                 drawCircle(
                     brush = Brush.radialGradient(
-                        colors = listOf(Color.White, Color.White.copy(alpha = 0.7f))
+                        colors = listOf(Color.White, Color.White.copy(alpha = 0.8f))
                     ),
-                    radius = 20f,
+                    radius = 18f,
                     center = Offset(centerX, centerY)
                 )
-                
                 drawCircle(
-                    color = CardBackground,
-                    radius = 14f,
+                    color = AppColors.Surface,
+                    radius = 12f,
                     center = Offset(centerX, centerY)
                 )
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
+        // Note and status display
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.scale(inTuneScale)
         ) {
+            // Large note display
             Text(
                 text = note ?: "--",
-                fontSize = 80.sp,
+                fontSize = 72.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
+                color = AppColors.TextPrimary,
+                fontFamily = ManropeFont,
                 letterSpacing = 2.sp
             )
             
             if (frequency != null) {
                 Text(
                     text = "%.1f Hz".format(frequency),
-                    fontSize = 22.sp,
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontWeight = FontWeight.Medium
+                    fontSize = 20.sp,
+                    color = AppColors.TextSecondary,
+                    fontFamily = ManropeFont
                 )
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
+            // Cents display
             val centsColor = when {
-                tuningState?.isInTune == true -> AccentGreen
-                (cents ?: 0f) < 0 -> AccentRed
-                else -> AccentYellow
+                tuningState?.isInTune == true -> AppColors.AccentGreen
+                (cents ?: 0f) < 0 -> AppColors.AccentRed
+                else -> AppColors.PrimaryAmber
             }
             
             Text(
@@ -460,32 +493,34 @@ fun PremiumGauge(
                     val sign = if (cents > 0) "+" else ""
                     "$sign${cents.toInt()} cent"
                 } else "-- cent",
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = centsColor
+                color = centsColor,
+                fontFamily = ManropeFont
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
+            // Status text
             if (tuningState != null) {
-                val instruction = when (tuningState.direction) {
-                    TuningDirection.TOO_LOW -> "Teli sık ↑"
-                    TuningDirection.TOO_HIGH -> "Teli gevşet ↓"
-                    TuningDirection.IN_TUNE -> "Akortlu ✓"
+                val (statusText, statusColor) = when (tuningState.direction) {
+                    TuningDirection.TOO_LOW -> "Teli sık ↑" to AppColors.AccentRed
+                    TuningDirection.TOO_HIGH -> "Teli gevşet ↓" to AppColors.PrimaryAmber
+                    TuningDirection.IN_TUNE -> "Akortlu ✓" to AppColors.AccentGreen
                 }
                 
                 Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = centsColor.copy(alpha = 0.2f),
-                    border = BorderStroke(2.dp, centsColor),
-                    modifier = Modifier.padding(horizontal = 32.dp)
+                    shape = RoundedCornerShape(20.dp),
+                    color = statusColor.copy(alpha = 0.15f),
+                    border = BorderStroke(2.dp, statusColor)
                 ) {
                     Text(
-                        text = instruction,
-                        fontSize = 20.sp,
+                        text = statusText,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = centsColor,
-                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 12.dp)
+                        color = statusColor,
+                        fontFamily = ManropeFont,
+                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 10.dp)
                     )
                 }
             }
@@ -494,18 +529,17 @@ fun PremiumGauge(
 }
 
 @Composable
-fun HeadstockStringSelector(
+fun ProfessionalStringSelector(
     strings: List<String>,
     selectedIndex: Int,
-    tuningState: TuningState?,
-    onStringSelected: (Int) -> Unit,
-    autoMode: Boolean
+    isTuned: Boolean,
+    onStringSelected: (Int) -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = CardBackground,
-        shadowElevation = 8.dp
+        shape = RoundedCornerShape(16.dp),
+        color = AppColors.Surface,
+        shadowElevation = 4.dp
     ) {
         Row(
             modifier = Modifier
@@ -514,11 +548,11 @@ fun HeadstockStringSelector(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             strings.forEachIndexed { index, name ->
-                StringPeg(
+                StringButton(
                     number = 6 - index,
                     note = name,
                     isSelected = index == selectedIndex,
-                    isTuned = index == selectedIndex && tuningState?.isInTune == true,
+                    isTuned = index == selectedIndex && isTuned,
                     onClick = { onStringSelected(index) }
                 )
             }
@@ -527,7 +561,7 @@ fun HeadstockStringSelector(
 }
 
 @Composable
-fun StringPeg(
+fun StringButton(
     number: Int,
     note: String,
     isSelected: Boolean,
@@ -535,70 +569,58 @@ fun StringPeg(
     onClick: () -> Unit
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.08f else 1f,
+        targetValue = if (isSelected) 1.1f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "scale"
-    )
-    
-    val checkScale by animateFloatAsState(
-        targetValue = if (isTuned) 1f else 0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "check"
     )
     
     Surface(
         onClick = onClick,
         modifier = Modifier
-            .scale(scale)
-            .padding(2.dp),
-        shape = RoundedCornerShape(16.dp),
+            .size(52.dp)
+            .scale(scale),
+        shape = CircleShape,
         color = if (isSelected) {
-            GradientStart
+            AppColors.PrimaryIndigo
         } else {
-            Color(0xFF252535)
+            AppColors.SurfaceElevated
         },
-        border = BorderStroke(
-            width = if (isSelected) 2.dp else 1.dp,
-            color = if (isSelected) {
-                Color.White.copy(alpha = 0.4f)
-            } else {
-                Color.White.copy(alpha = 0.15f)
-            }
-        )
+        border = if (isSelected) {
+            BorderStroke(2.dp, AppColors.PrimaryAmber.copy(alpha = 0.5f))
+        } else {
+            BorderStroke(1.dp, AppColors.TextSecondary.copy(alpha = 0.2f))
+        }
     ) {
-        Box(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 18.dp),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(contentAlignment = Alignment.Center) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = number.toString(),
-                    fontSize = 13.sp,
-                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                    fontSize = 10.sp,
+                    color = if (isSelected) Color.White.copy(alpha = 0.7f) else AppColors.TextSecondary,
+                    fontFamily = ManropeFont
                 )
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = note,
-                    fontSize = 24.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.85f)
+                    color = if (isSelected) Color.White else AppColors.TextPrimary,
+                    fontFamily = ManropeFont
                 )
             }
             
-            if (isTuned && checkScale > 0) {
+            if (isTuned) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Akortlu",
+                    contentDescription = "Tuned",
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = 6.dp, y = (-6).dp)
-                        .scale(checkScale)
-                        .size(22.dp)
-                        .background(AccentGreen, CircleShape)
-                        .padding(3.dp),
+                        .offset(x = 4.dp, y = (-4).dp)
+                        .size(16.dp)
+                        .background(AppColors.AccentGreen, CircleShape)
+                        .padding(2.dp),
                     tint = Color.White
                 )
             }
@@ -607,39 +629,27 @@ fun StringPeg(
 }
 
 @Composable
-fun PremiumButton(
+fun ProfessionalButton(
     text: String,
     isListening: Boolean,
     onClick: () -> Unit
 ) {
-    val gradient = if (isListening) {
-        Brush.horizontalGradient(colors = listOf(AccentRed, AccentRed.copy(alpha = 0.8f)))
-    } else {
-        Brush.horizontalGradient(colors = listOf(GradientStart, GradientEnd))
-    }
-    
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        contentPadding = PaddingValues()
+            .height(56.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isListening) AppColors.AccentRed else AppColors.PrimaryIndigo
+        )
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(gradient),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = ManropeFont
+        )
     }
 }
 
@@ -655,10 +665,11 @@ fun TuningBottomSheet(
     ) {
         Text(
             text = "Akort Türü Seçin",
-            fontSize = 24.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.padding(bottom = 16.dp)
+            color = AppColors.TextPrimary,
+            fontFamily = ManropeFont,
+            modifier = Modifier.padding(bottom = 20.dp)
         )
         
         TuningType.values().forEach { tuning ->
@@ -667,41 +678,42 @@ fun TuningBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 6.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 color = if (tuning == currentTuning) {
-                    GradientStart.copy(alpha = 0.2f)
+                    AppColors.PrimaryIndigo.copy(alpha = 0.15f)
                 } else {
-                    Color.White.copy(alpha = 0.05f)
+                    AppColors.Surface
                 },
                 border = BorderStroke(
                     width = if (tuning == currentTuning) 2.dp else 1.dp,
                     color = if (tuning == currentTuning) {
-                        GradientStart
+                        AppColors.PrimaryIndigo
                     } else {
-                        Color.White.copy(alpha = 0.1f)
+                        AppColors.TextSecondary.copy(alpha = 0.2f)
                     }
                 )
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(18.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = tuning.displayName,
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = if (tuning == currentTuning) FontWeight.Bold else FontWeight.Normal,
-                        color = Color.White
+                        color = AppColors.TextPrimary,
+                        fontFamily = ManropeFont
                     )
                     
                     if (tuning == currentTuning) {
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            tint = GradientStart,
-                            modifier = Modifier.size(24.dp)
+                            tint = AppColors.PrimaryIndigo,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -715,9 +727,7 @@ fun TuningBottomSheet(
 @Composable
 fun SettingsBottomSheet(
     currentA4: Float,
-    autoMode: Boolean,
     onA4Changed: (Float) -> Unit,
-    onAutoModeChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     var sliderValue by remember { mutableFloatStateOf(currentA4) }
@@ -729,34 +739,36 @@ fun SettingsBottomSheet(
     ) {
         Text(
             text = "Ayarlar",
-            fontSize = 24.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.padding(bottom = 24.dp)
+            color = AppColors.TextPrimary,
+            fontFamily = ManropeFont,
+            modifier = Modifier.padding(bottom = 20.dp)
         )
         
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White.copy(alpha = 0.05f)
+            shape = RoundedCornerShape(12.dp),
+            color = AppColors.Surface
         ) {
             Column(
                 modifier = Modifier.padding(20.dp)
             ) {
                 Text(
                     text = "A4 Referans Frekansı",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White.copy(alpha = 0.9f)
+                    fontSize = 14.sp,
+                    color = AppColors.TextSecondary,
+                    fontFamily = ManropeFont
                 )
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 
                 Text(
                     text = "${sliderValue.toInt()} Hz",
-                    fontSize = 32.sp,
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
-                    color = GradientStart,
+                    color = AppColors.PrimaryIndigo,
+                    fontFamily = ManropeFont,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 
@@ -768,9 +780,9 @@ fun SettingsBottomSheet(
                     valueRange = 430f..450f,
                     steps = 19,
                     colors = SliderDefaults.colors(
-                        thumbColor = GradientStart,
-                        activeTrackColor = GradientStart,
-                        inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                        thumbColor = AppColors.PrimaryIndigo,
+                        activeTrackColor = AppColors.PrimaryIndigo,
+                        inactiveTrackColor = AppColors.TextSecondary.copy(alpha = 0.2f)
                     )
                 )
                 
@@ -778,13 +790,13 @@ fun SettingsBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("430 Hz", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
-                    Text("450 Hz", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+                    Text("430 Hz", color = AppColors.TextSecondary, fontSize = 12.sp, fontFamily = ManropeFont)
+                    Text("450 Hz", color = AppColors.TextSecondary, fontSize = 12.sp, fontFamily = ManropeFont)
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         
         Button(
             onClick = {
@@ -793,28 +805,18 @@ fun SettingsBottomSheet(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            contentPadding = PaddingValues()
+                .height(52.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AppColors.PrimaryIndigo
+            )
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(GradientStart, GradientEnd)
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Kaydet",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
+            Text(
+                text = "Kaydet",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = ManropeFont
+            )
         }
         
         Spacer(modifier = Modifier.height(16.dp))

@@ -26,16 +26,28 @@ class TunerViewModel : ViewModel() {
     private val audioCapture = AudioCapture()
     private var captureJob: Job? = null
     
+    // Pitch smoothing with EMA (Exponential Moving Average)
+    private var smoothedFrequency: Float? = null
+    private val smoothingFactor = 0.3f // Lower = smoother but slower response
+    
     fun startListening() {
         if (_uiState.value.isListening) return
         
         _uiState.value = _uiState.value.copy(isListening = true)
+        smoothedFrequency = null // Reset smoothing on start
         
         captureJob = viewModelScope.launch {
             audioCapture.startCapture().collect { frequency ->
                 if (frequency != null) {
-                    processFrequency(frequency)
+                    // Apply EMA smoothing
+                    smoothedFrequency = if (smoothedFrequency == null) {
+                        frequency
+                    } else {
+                        smoothedFrequency!! * (1 - smoothingFactor) + frequency * smoothingFactor
+                    }
+                    processFrequency(smoothedFrequency!!)
                 } else {
+                    smoothedFrequency = null
                     _uiState.value = _uiState.value.copy(
                         tuningState = null,
                         detectedFrequency = null
