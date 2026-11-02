@@ -21,9 +21,12 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.view.HapticFeedbackConstants
@@ -85,7 +88,7 @@ fun TunerScreen(
                 onSettingsClick = { showSettingsSheet = true }
             )
             
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             // Main tuner area
             Box(
@@ -103,7 +106,7 @@ fun TunerScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             // String selector
             MinimalStringSelector(
@@ -273,13 +276,13 @@ fun MinimalTunerDisplay(
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         // Huge thin note name - Apple style
         Text(
             text = note ?: "--",
-            fontSize = 120.sp,
+            fontSize = 110.sp,
             fontWeight = FontWeight.Light,
             color = AppColors.TextPrimary,
             fontFamily = InterFont,
@@ -291,14 +294,12 @@ fun MinimalTunerDisplay(
         if (frequency != null) {
             Text(
                 text = "%.1f Hz".format(frequency),
-                fontSize = 17.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = AppColors.TextSecondary,
                 fontFamily = InterFont
             )
         }
-        
-        Spacer(modifier = Modifier.height(8.dp))
         
         // Horizontal cent ruler - minimal Apple style
         if (tuningState != null) {
@@ -307,7 +308,7 @@ fun MinimalTunerDisplay(
                 isInTune = tuningState.isInTune
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             
             // Cents value
             val centsColor = when {
@@ -321,13 +322,13 @@ fun MinimalTunerDisplay(
                     val sign = if (cents > 0) "+" else ""
                     "$sign${cents.toInt()}"
                 } else "--",
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = centsColor,
                 fontFamily = InterFont
             )
             
-            // Status text - plain and clear
+            // Status text - clear and visible
             val statusText = when (tuningState.direction) {
                 TuningDirection.TOO_LOW -> "Teli sık"
                 TuningDirection.TOO_HIGH -> "Teli gevşet"
@@ -336,12 +337,13 @@ fun MinimalTunerDisplay(
             
             Text(
                 text = statusText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
                 color = centsColor,
                 fontFamily = InterFont
             )
         } else {
+            Spacer(modifier = Modifier.height(80.dp))
             // Placeholder
             Text(
                 text = "Teli çal",
@@ -361,51 +363,84 @@ fun HorizontalCentRuler(
 ) {
     Canvas(
         modifier = Modifier
-            .fillMaxWidth(0.9f)
-            .height(60.dp)
+            .fillMaxWidth(0.85f)
+            .height(80.dp)
     ) {
         val width = size.width
         val height = size.height
         val centerX = width / 2
         val centerY = height / 2
         
-        // Draw tick marks
+        // Draw tick marks with labels - darker and longer
         for (tick in -50..50 step 10) {
-            val x = centerX + (tick / 50f) * (width / 2 * 0.9f)
-            val isMajor = tick % 20 == 0
-            val tickHeight = if (isMajor) 24f else 16f
-            val tickColor = if (tick == 0) AppColors.AccentGreen else AppColors.Separator
+            val x = centerX + (tick / 50f) * (width / 2 * 0.95f)
+            val isMajor = tick % 10 == 0
+            val isCenter = tick == 0
+            val tickHeight = if (isCenter) 32f else if (isMajor) 24f else 16f
+            val tickColor = if (isCenter) {
+                AppColors.AccentGreen.copy(alpha = 0.6f)
+            } else {
+                AppColors.TextSecondary.copy(alpha = 0.4f)
+            }
             
             drawLine(
                 color = tickColor,
                 start = Offset(x, centerY - tickHeight / 2),
                 end = Offset(x, centerY + tickHeight / 2),
-                strokeWidth = if (isMajor) 2f else 1f,
+                strokeWidth = if (isCenter) 2.5f else 1.5f,
                 cap = StrokeCap.Round
             )
+            
+            // Labels at -50, 0, +50
+            if (tick == -50 || tick == 0 || tick == 50) {
+                val label = when (tick) {
+                    -50 -> "-50"
+                    0 -> "0"
+                    50 -> "+50"
+                    else -> ""
+                }
+                drawIntoCanvas { canvas ->
+                    val paint = android.graphics.Paint().apply {
+                        color = android.graphics.Color.parseColor("#86868B")
+                        textSize = 28f
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        isAntiAlias = true
+                    }
+                    canvas.nativeCanvas.drawText(label, x, centerY + tickHeight / 2 + 38f, paint)
+                }
+            }
         }
         
-        // Draw indicator line
-        val indicatorX = centerX + (cents / 50f) * (width / 2 * 0.9f)
+        // Draw indicator pill with soft halo
+        val indicatorX = centerX + (cents / 50f) * (width / 2 * 0.95f)
         val indicatorColor = when {
             isInTune -> AppColors.AccentGreen
             cents < 0 -> AppColors.AccentRed
             else -> AppColors.AccentOrange
         }
         
-        drawLine(
+        // Soft halo effect
+        for (i in listOf(16f, 12f, 8f)) {
+            drawCircle(
+                color = indicatorColor.copy(alpha = 0.08f),
+                radius = i,
+                center = Offset(indicatorX, centerY)
+            )
+        }
+        
+        // Rounded pill indicator
+        drawRoundRect(
             color = indicatorColor,
-            start = Offset(indicatorX, 0f),
-            end = Offset(indicatorX, height),
-            strokeWidth = 3f,
-            cap = StrokeCap.Round
+            topLeft = Offset(indicatorX - 4f, centerY - 18f),
+            size = androidx.compose.ui.geometry.Size(8f, 36f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f, 4f)
         )
         
         // Indicator dot at bottom
         drawCircle(
             color = indicatorColor,
-            radius = 6f,
-            center = Offset(indicatorX, height)
+            radius = 5f,
+            center = Offset(indicatorX, centerY + 24f)
         )
     }
 }
@@ -417,18 +452,28 @@ fun MinimalStringSelector(
     isTuned: Boolean,
     onStringSelected: (Int) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        strings.forEachIndexed { index, name ->
-            MinimalStringButton(
-                number = 6 - index,
-                note = name,
-                isSelected = index == selectedIndex,
-                isTuned = index == selectedIndex && isTuned,
-                onClick = { onStringSelected(index) }
-            )
+        val availableWidth = maxWidth - 40.dp // Account for horizontal padding
+        val buttonSize = minOf(48.dp, availableWidth / 7) // 6 buttons + spacing
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            strings.forEachIndexed { index, name ->
+                MinimalStringButton(
+                    number = 6 - index,
+                    note = name,
+                    isSelected = index == selectedIndex,
+                    isTuned = index == selectedIndex && isTuned,
+                    onClick = { onStringSelected(index) },
+                    size = buttonSize
+                )
+            }
         }
     }
 }
@@ -439,7 +484,8 @@ fun MinimalStringButton(
     note: String,
     isSelected: Boolean,
     isTuned: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    size: Dp
 ) {
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 1.1f else 1f,
@@ -449,12 +495,12 @@ fun MinimalStringButton(
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // Circular button
         Box(
             modifier = Modifier
-                .size(54.dp)
+                .size(size)
                 .scale(scale)
                 .clip(CircleShape)
                 .background(if (isSelected) AppColors.TextPrimary else Color.Transparent)
@@ -468,7 +514,7 @@ fun MinimalStringButton(
         ) {
             Text(
                 text = note,
-                fontSize = 22.sp,
+                fontSize = (size.value * 0.4f).sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (isSelected) Color.White else AppColors.TextPrimary,
                 fontFamily = InterFont
@@ -478,7 +524,7 @@ fun MinimalStringButton(
             if (isTuned) {
                 Box(
                     modifier = Modifier
-                        .size(10.dp)
+                        .size(8.dp)
                         .align(Alignment.TopEnd)
                         .offset(x = 2.dp, y = (-2).dp)
                         .clip(CircleShape)
