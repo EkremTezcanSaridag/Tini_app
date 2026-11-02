@@ -752,8 +752,12 @@ private fun getStringNames(tuning: TuningType): List<String> {
     return when (tuning) {
         TuningType.STANDARD -> listOf("E", "A", "D", "G", "B", "E")
         TuningType.DROP_D -> listOf("D", "A", "D", "G", "B", "E")
+        TuningType.DROP_C -> listOf("C", "G", "C", "F", "A", "D")
         TuningType.HALF_STEP_DOWN -> listOf("Eb", "Ab", "Db", "Gb", "Bb", "Eb")
+        TuningType.DROP_Db -> listOf("Db", "Ab", "Db", "Gb", "Bb", "Eb")
         TuningType.OPEN_G -> listOf("D", "G", "D", "G", "B", "D")
+        TuningType.OPEN_D -> listOf("D", "A", "D", "F#", "A", "D")
         TuningType.DADGAD -> listOf("D", "A", "D", "G", "A", "D")
+        TuningType.DOUBLE_DROP_D -> listOf("D", "A", "D", "G", "B", "D")
     }
 }

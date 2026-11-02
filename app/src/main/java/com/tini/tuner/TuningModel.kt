@@ -11,11 +11,15 @@ data class GuitarString(
 )
 
 enum class TuningType(val displayName: String, val frequencies: List<Float>) {
-    STANDARD("Standart", listOf(82.41f, 110.00f, 146.83f, 196.00f, 246.94f, 329.63f)),
-    DROP_D("Drop D", listOf(73.42f, 110.00f, 146.83f, 196.00f, 246.94f, 329.63f)),
-    HALF_STEP_DOWN("Yarım ton pes", listOf(77.78f, 103.83f, 138.59f, 185.00f, 233.08f, 311.13f)),
-    OPEN_G("Open G", listOf(73.42f, 98.00f, 146.83f, 196.00f, 246.94f, 293.66f)),
-    DADGAD("DADGAD", listOf(73.42f, 110.00f, 146.83f, 196.00f, 220.00f, 293.66f))
+    STANDARD("Standart", listOf(82.41f, 110.00f, 146.83f, 196.00f, 246.94f, 329.63f)), // E A D G B E
+    DROP_D("Drop D", listOf(73.42f, 110.00f, 146.83f, 196.00f, 246.94f, 329.63f)), // D A D G B E
+    DROP_C("Drop C", listOf(65.41f, 98.00f, 130.81f, 174.61f, 220.00f, 293.66f)), // C G C F A D
+    HALF_STEP_DOWN("Yarım ton pes (Eb)", listOf(77.78f, 103.83f, 138.59f, 185.00f, 233.08f, 311.13f)), // Eb Ab Db Gb Bb Eb
+    DROP_Db("Drop Db", listOf(69.30f, 103.83f, 138.59f, 185.00f, 233.08f, 311.13f)), // Db Ab Db Gb Bb Eb
+    OPEN_G("Open G", listOf(73.42f, 98.00f, 146.83f, 196.00f, 246.94f, 293.66f)), // D G D G B D
+    OPEN_D("Open D", listOf(73.42f, 110.00f, 146.83f, 185.00f, 220.00f, 293.66f)), // D A D F# A D
+    DADGAD("DADGAD", listOf(73.42f, 110.00f, 146.83f, 196.00f, 220.00f, 293.66f)), // D A D G A D
+    DOUBLE_DROP_D("Double Drop D", listOf(73.42f, 110.00f, 146.83f, 196.00f, 246.94f, 293.66f)) // D A D G B D
 }
 
 data class TuningState(
