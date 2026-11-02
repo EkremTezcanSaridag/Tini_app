@@ -40,9 +40,9 @@
 - **🎸 Çoklu Akort Desteği:** 5 farklı akort türü
   - **Standart:** E A D G B E
   - **Drop D:** D A D G B E
-  - **DADGAD:** D A D G A D
+  - **Yarım ton pes (Eb):** Eb Ab Db Gb Bb Eb
   - **Open G:** D G D G B D
-  - **Open D:** D A D F# A D
+  - **DADGAD:** D A D G A D
 - **✅ Hassas Akort:** ±5 cent toleransla tam akort göstergesi
 - **🎚️ A4 Referans Ayarı:** 430-450 Hz arası özelleştirilebilir (varsayılan: 440 Hz)
 - **🎭 Akıllı Modlar:**
