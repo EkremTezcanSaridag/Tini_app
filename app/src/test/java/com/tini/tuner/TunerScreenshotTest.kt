@@ -1,8 +1,17 @@
 package com.tini.tuner
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Ignore
 import org.junit.Rule
@@ -17,7 +26,6 @@ import org.robolectric.annotation.GraphicsMode
  * These generate REAL renders of the Compose UI, not mockups.
  * 
  * These tests run locally only (NATIVE graphics mode requires display).
- * They are excluded from CI via @Ignore annotation.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -27,7 +35,6 @@ class TunerScreenshotTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_idle_noAudio() {
         composeTestRule.setContent {
@@ -56,7 +63,6 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
-    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_inTune_E2() {
         composeTestRule.setContent {
@@ -92,7 +98,6 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
-    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_tooLow_E2_minus25cents() {
         composeTestRule.setContent {
@@ -128,7 +133,6 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
-    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_tooHigh_A2_plus30cents() {
         composeTestRule.setContent {
@@ -164,7 +168,6 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
-    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_allStrings_Standard() {
         composeTestRule.setContent {
@@ -200,7 +203,6 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
-    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_DADGAD_tuning() {
         composeTestRule.setContent {
@@ -235,12 +237,56 @@ class TunerScreenshotTest {
         composeTestRule.waitForIdle()
         composeTestRule.onRoot().captureRoboImage()
     }
+    
+    @Test
+    fun permissionScreen() {
+        composeTestRule.setContent {
+            TiniTheme {
+                ProfessionalPermissionScreen(
+                    onRequestPermission = {}
+                )
+            }
+        }
+        
+        composeTestRule.waitForIdle()
+        composeTestRule.onRoot().captureRoboImage()
+    }
+    
+    @Test
+    fun appIcon() {
+        composeTestRule.setContent {
+            Box(
+                modifier = Modifier
+                    .size(192.dp)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = "App Icon",
+                    modifier = Modifier.size(108.dp)
+                )
+            }
+        }
+        
+        composeTestRule.waitForIdle()
+        composeTestRule.onRoot().captureRoboImage()
+    }
 }
 
 @Composable
 private fun TiniTheme(content: @Composable () -> Unit) {
     androidx.compose.material3.MaterialTheme(
-        colorScheme = androidx.compose.material3.darkColorScheme(),
+        colorScheme = androidx.compose.material3.lightColorScheme(
+            primary = AppColors.AccentBlue,
+            secondary = AppColors.AccentGreen,
+            background = AppColors.Background,
+            surface = AppColors.Surface,
+            onPrimary = androidx.compose.ui.graphics.Color.White,
+            onSecondary = androidx.compose.ui.graphics.Color.White,
+            onBackground = AppColors.TextPrimary,
+            onSurface = AppColors.TextPrimary
+        ),
         content = content
     )
 }
