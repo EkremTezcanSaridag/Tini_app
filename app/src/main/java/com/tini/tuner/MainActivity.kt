@@ -74,26 +74,33 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-val ManropeFont = FontFamily(Font(R.font.manrope_regular))
+val InterFont = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_light, FontWeight.Light)
+)
 
 object AppColors {
-    val Background = Color(0xFF0F0F14)
-    val Surface = Color(0xFF1A1A2E)
-    val SurfaceElevated = Color(0xFF252538)
-    val PrimaryIndigo = Color(0xFF4F46E5)
-    val PrimaryAmber = Color(0xFFF59E0B)
-    val AccentGreen = Color(0xFF10B981)
-    val AccentRed = Color(0xFFEF4444)
-    val TextPrimary = Color(0xFFFFFFFF)
-    val TextSecondary = Color(0xFFA0A0B8)
+    // Apple-style minimal white theme
+    val Background = Color(0xFFFAFAFA)
+    val Surface = Color(0xFFFFFFFF)
+    val SurfaceSecondary = Color(0xFFF5F5F7)
+    val TextPrimary = Color(0xFF1D1D1F)
+    val TextSecondary = Color(0xFF86868B)
+    val AccentBlue = Color(0xFF007AFF)
+    val AccentGreen = Color(0xFF34C759)
+    val AccentOrange = Color(0xFFFF9500)
+    val AccentRed = Color(0xFFFF3B30)
+    val Separator = Color(0xFFE5E5E5)
 }
 
 @Composable
 fun TiniTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = darkColorScheme(
-            primary = AppColors.PrimaryIndigo,
-            secondary = AppColors.PrimaryAmber,
+        colorScheme = lightColorScheme(
+            primary = AppColors.AccentBlue,
+            secondary = AppColors.AccentGreen,
             background = AppColors.Background,
             surface = AppColors.Surface,
             onPrimary = Color.White,
@@ -110,73 +117,64 @@ fun ProfessionalPermissionScreen(onRequestPermission: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(AppColors.Background, AppColors.Surface)
-                )
-            )
-            .padding(32.dp),
+            .background(AppColors.Background)
+            .padding(horizontal = 32.dp, vertical = 48.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Icon
-            Surface(
-                modifier = Modifier.size(96.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = AppColors.PrimaryIndigo.copy(alpha = 0.1f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = AppColors.PrimaryIndigo
-                    )
-                }
-            }
-            
-            // Title
-            Text(
-                text = "Mikrofon İzni Gerekli",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.TextPrimary,
-                textAlign = TextAlign.Center,
-                fontFamily = ManropeFont
-            )
-            
-            // Description
-            Text(
-                text = "Tını, gitarınızın sesini dinleyerek size mükemmel akort sağlar. " +
-                        "Mikrofon erişimine izin vererek başlayalım.",
-                fontSize = 16.sp,
-                color = AppColors.TextSecondary,
-                textAlign = TextAlign.Center,
-                fontFamily = ManropeFont,
-                lineHeight = 24.sp
+            // Minimal microphone icon
+            Icon(
+                imageVector = Icons.Default.Mic,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = AppColors.TextSecondary
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Permission button
+            // Title - clean and simple
+            Text(
+                text = "Mikrofon İzni Gerekli",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AppColors.TextPrimary,
+                textAlign = TextAlign.Center,
+                fontFamily = InterFont
+            )
+            
+            // Description
+            Text(
+                text = "Tını, gitarınızın sesini dinleyerek size mükemmel akort sağlar.",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Normal,
+                color = AppColors.TextSecondary,
+                textAlign = TextAlign.Center,
+                fontFamily = InterFont,
+                lineHeight = 22.sp
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Clean iOS-style button
             Button(
                 onClick = onRequestPermission,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AppColors.PrimaryIndigo
+                    containerColor = AppColors.AccentBlue,
+                    contentColor = Color.White
                 )
             ) {
                 Text(
-                    "Mikrofon İznini Ver",
-                    fontSize = 16.sp,
+                    "İzin Ver",
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = ManropeFont
+                    fontFamily = InterFont
                 )
             }
         }

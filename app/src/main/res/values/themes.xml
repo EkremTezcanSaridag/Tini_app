@@ -2,7 +2,7 @@
 <resources>
     <!-- Splash Screen Theme -->
     <style name="Theme.Tini.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/background_dark</item>
+        <item name="windowSplashScreenBackground">@color/surface_white</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="windowSplashScreenAnimationDuration">300</item>
         <item name="postSplashScreenTheme">@style/Theme.Tini</item>
@@ -10,7 +10,9 @@
     
     <!-- Main App Theme -->
     <style name="Theme.Tini" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/background_dark</item>
-        <item name="android:navigationBarColor">@color/background_dark</item>
+        <item name="android:statusBarColor">@color/surface_white</item>
+        <item name="android:navigationBarColor">@color/surface_white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>
