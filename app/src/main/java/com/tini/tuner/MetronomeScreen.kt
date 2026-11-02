@@ -1,7 +1,8 @@
 package com.tini.tuner
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,30 +16,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 
 @Composable
 fun MetronomeScreen(
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
     var bpm by remember { mutableFloatStateOf(120f) }
     var beatCount by remember { mutableIntStateOf(0) }
+    var lastAccent by remember { mutableStateOf(false) }
+    var soundType by remember { mutableStateOf(MetronomeSoundType.WOOD) }
     
-    val metronome = remember { MetronomeEngine() }
+    val metronome = remember { MetronomeEngine(context) }
+    val mainHandler = remember { Handler(Looper.getMainLooper()) }
     
-    LaunchedEffect(isPlaying, bpm) {
+    LaunchedEffect(isPlaying, bpm, soundType) {
         if (isPlaying) {
-            metronome.start(bpm.toInt())
-            while (isPlaying) {
-                delay((60000L / bpm.toLong()))
-                beatCount++
+            beatCount = 0
+            metronome.start(bpm.toInt(), soundType) { accent, index ->
+                mainHandler.post {
+                    lastAccent = accent
+                    beatCount = index + 1
+                }
             }
         } else {
             metronome.stop()
+            beatCount = 0
+            lastAccent = false
         }
     }
     
@@ -48,13 +57,14 @@ fun MetronomeScreen(
         }
     }
     
+    val colors = AppColors
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppColors.Background)
+            .background(colors.Background)
             .padding(24.dp)
     ) {
-        // Top bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -63,7 +73,7 @@ fun MetronomeScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Geri",
-                    tint = AppColors.TextPrimary
+                    tint = colors.TextPrimary
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -71,14 +81,13 @@ fun MetronomeScreen(
                 text = "Metronom",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = AppColors.TextPrimary,
+                color = colors.TextPrimary,
                 fontFamily = InterFont
             )
         }
         
         Spacer(modifier = Modifier.height(48.dp))
         
-        // BPM Display
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -87,34 +96,68 @@ fun MetronomeScreen(
                 text = "${bpm.toInt()}",
                 fontSize = 72.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = AppColors.TextPrimary,
+                color = colors.TextPrimary,
                 fontFamily = InterFont
             )
             Text(
                 text = "BPM",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
-                color = AppColors.TextSecondary,
+                color = colors.TextSecondary,
                 fontFamily = InterFont
             )
         }
         
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
-        // Visual metronome
-        MetronomePulse(isPlaying = isPlaying, beatCount = beatCount)
-        
-        Spacer(modifier = Modifier.height(48.dp))
-        
-        // BPM Slider
-        Column(
-            modifier = Modifier.fillMaxWidth()
+        Text(
+            text = "Ses",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.TextSecondary,
+            fontFamily = InterFont
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.SurfaceSecondary)
+                .padding(2.dp)
         ) {
+            MetronomeSoundType.entries.forEach { type ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (soundType == type) colors.Surface else Color.Transparent)
+                        .clickable(enabled = !isPlaying) { soundType = type }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = type.displayName,
+                        fontSize = 13.sp,
+                        fontWeight = if (soundType == type) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (soundType == type) colors.TextPrimary else colors.TextSecondary,
+                        fontFamily = InterFont
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        MetronomePulse(isPlaying = isPlaying, beatCount = beatCount, accent = lastAccent)
+        
+        Spacer(modifier = Modifier.height(48.dp))
+        
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "Tempo",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
-                color = AppColors.TextSecondary,
+                color = colors.TextSecondary,
                 fontFamily = InterFont
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -124,23 +167,22 @@ fun MetronomeScreen(
                 valueRange = 40f..240f,
                 steps = 199,
                 colors = SliderDefaults.colors(
-                    thumbColor = AppColors.AccentBlue,
-                    activeTrackColor = AppColors.AccentBlue,
-                    inactiveTrackColor = AppColors.Separator
+                    thumbColor = colors.AccentBlue,
+                    activeTrackColor = colors.AccentBlue,
+                    inactiveTrackColor = colors.Separator
                 )
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("40", color = AppColors.TextSecondary, fontSize = 12.sp, fontFamily = InterFont)
-                Text("240", color = AppColors.TextSecondary, fontSize = 12.sp, fontFamily = InterFont)
+                Text("40", color = colors.TextSecondary, fontSize = 12.sp, fontFamily = InterFont)
+                Text("240", color = colors.TextSecondary, fontSize = 12.sp, fontFamily = InterFont)
             }
         }
         
         Spacer(modifier = Modifier.weight(1f))
         
-        // Play/Stop button
         Button(
             onClick = { isPlaying = !isPlaying },
             modifier = Modifier
@@ -148,7 +190,7 @@ fun MetronomeScreen(
                 .height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isPlaying) AppColors.AccentRed else AppColors.AccentGreen,
+                containerColor = if (isPlaying) colors.AccentRed else colors.AccentGreen,
                 contentColor = Color.White
             )
         ) {
@@ -165,12 +207,18 @@ fun MetronomeScreen(
 }
 
 @Composable
-fun MetronomePulse(isPlaying: Boolean, beatCount: Int) {
+fun MetronomePulse(isPlaying: Boolean, beatCount: Int, accent: Boolean) {
+    val targetScale = when {
+        !isPlaying || beatCount == 0 -> 1f
+        accent -> 1.28f
+        else -> 1.12f
+    }
     val scale by animateFloatAsState(
-        targetValue = if (isPlaying && beatCount > 0) 1.2f else 1f,
-        animationSpec = tween(durationMillis = 100),
+        targetValue = targetScale,
+        animationSpec = tween(durationMillis = 80),
         label = "pulse"
     )
+    val colors = AppColors
     
     Box(
         modifier = Modifier
@@ -183,7 +231,11 @@ fun MetronomePulse(isPlaying: Boolean, beatCount: Int) {
                 .size((80 * scale).dp)
                 .clip(CircleShape)
                 .background(
-                    if (isPlaying) AppColors.AccentBlue else AppColors.Separator
+                    when {
+                        !isPlaying -> colors.Separator
+                        accent -> colors.AccentGreen
+                        else -> colors.AccentBlue
+                    }
                 )
         )
     }

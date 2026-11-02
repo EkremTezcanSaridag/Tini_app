@@ -1,87 +1,91 @@
 package com.tini.tuner
 
+import android.content.Context
 import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioTrack
-import kotlinx.coroutines.*
-import kotlin.math.sin
+import android.media.SoundPool
+import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.LockSupport
+import kotlin.concurrent.thread
 
-class MetronomeEngine {
-    private var audioTrack: AudioTrack? = null
-    private var job: Job? = null
-    private val sampleRate = 44100
-    
-    fun start(bpm: Int) {
+class MetronomeEngine(context: Context) {
+    private val appContext = context.applicationContext
+    private val soundPool: SoundPool
+    private val soundIds = mutableMapOf<Pair<MetronomeSoundType, Boolean>, Int>()
+    private var playThread: Thread? = null
+    private val running = AtomicBoolean(false)
+    private var beatsPerBar = 4
+
+    init {
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(4)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            .build()
+        preloadAllSounds()
+    }
+
+    private fun preloadAllSounds() {
+        MetronomeSoundType.entries.forEach { type ->
+            soundIds[type to false] = loadSample(type, accented = false)
+            soundIds[type to true] = loadSample(type, accented = true)
+        }
+    }
+
+    private fun loadSample(type: MetronomeSoundType, accented: Boolean): Int {
+        val samples = MetronomeSampleFactory.generate(type, accented)
+        val cacheDir = File(appContext.cacheDir, "metronome_pcm").apply { mkdirs() }
+        val file = File(cacheDir, "${type.name}_${if (accented) "accent" else "beat"}.wav")
+        if (!file.exists() || file.length() == 0L) {
+            MetronomeWavUtil.writeMonoPcm16Wav(file, samples)
+        }
+        return soundPool.load(file.absolutePath, 1)
+    }
+
+    fun start(
+        bpm: Int,
+        soundType: MetronomeSoundType,
+        onBeat: (accent: Boolean, beatIndex: Int) -> Unit
+    ) {
         stop()
-        
-        job = CoroutineScope(Dispatchers.Default).launch {
-            val intervalMs = (60000 / bpm).toLong()
-            
-            while (isActive) {
-                playClick()
-                delay(intervalMs)
+        if (bpm <= 0) return
+        running.set(true)
+        val intervalNs = 60_000_000_000L / bpm
+        playThread = thread(name = "TiniMetronome", priority = Thread.NORM_PRIORITY + 1) {
+            var beatIndex = 0
+            var nextBeatNs = System.nanoTime() + intervalNs
+            while (running.get()) {
+                val accent = beatIndex % beatsPerBar == 0
+                val id = soundIds[soundType to accent] ?: 0
+                if (id != 0) {
+                    soundPool.play(id, 1f, 1f, 1, 0, 1f)
+                }
+                onBeat(accent, beatIndex)
+                beatIndex++
+                nextBeatNs += intervalNs
+                var waitNs = nextBeatNs - System.nanoTime()
+                while (waitNs > 0 && running.get()) {
+                    LockSupport.parkNanos(waitNs)
+                    waitNs = nextBeatNs - System.nanoTime()
+                }
             }
         }
     }
-    
+
     fun stop() {
-        job?.cancel()
-        job = null
-        audioTrack?.stop()
-        audioTrack?.release()
-        audioTrack = null
+        running.set(false)
+        playThread?.interrupt()
+        playThread?.join(300)
+        playThread = null
+        soundPool.autoPause()
     }
-    
+
     fun release() {
         stop()
-    }
-    
-    private fun playClick() {
-        try {
-            // Generate a short click sound (1000 Hz tone, 50ms duration)
-            val durationMs = 50
-            val numSamples = (sampleRate * durationMs / 1000)
-            val buffer = ShortArray(numSamples)
-            val frequency = 1000.0 // Hz
-            
-            // Generate sine wave with envelope
-            for (i in 0 until numSamples) {
-                val t = i.toDouble() / sampleRate
-                val envelope = 1.0 - (i.toDouble() / numSamples) // Linear decay
-                val sample = (sin(2.0 * Math.PI * frequency * t) * envelope * Short.MAX_VALUE * 0.5).toInt()
-                buffer[i] = sample.toShort()
-            }
-            
-            // Create and play AudioTrack
-            val track = AudioTrack.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(sampleRate)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build()
-                )
-                .setBufferSizeInBytes(numSamples * 2)
-                .setTransferMode(AudioTrack.MODE_STATIC)
-                .build()
-            
-            track.write(buffer, 0, numSamples)
-            track.play()
-            
-            // Clean up after playback
-            CoroutineScope(Dispatchers.Default).launch {
-                delay(durationMs.toLong())
-                track.stop()
-                track.release()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        soundPool.release()
     }
 }

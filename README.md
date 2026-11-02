@@ -51,7 +51,7 @@
   - **Gitar:** Standart, Drop D, Drop C, Yarım ton pes (Eb), Drop Db, Open G, Open D, DADGAD, Double Drop D
   - **Bas:** Standart (E A D G), Drop D, 5 Tel (B E A D G)
   - **Ukulele:** C (GCEA), D (ADF#B)
-- **🎼 Metronom:** 40–240 BPM, sesli tik, görsel nabız
+- **🎼 Metronom:** 40–240 BPM, profesyonel tahta/klasik/hi-hat sesleri (SoundPool, vurgulu 1. vuruş), görsel nabız
 - **📜 Akort geçmişi:** Otomatik kayıt, son 100 oturum
 - **🌓 Tema:** Açık (varsayılan), koyu, sistem
 - **🎵 Akor kütüphanesi:** 30 yaygın akor, Canvas diyagramları
@@ -306,7 +306,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.0  
+**Versiyon:** 3.0.1  
 **Son Güncelleme:** 2 Kasım 2026
 
 </div>
