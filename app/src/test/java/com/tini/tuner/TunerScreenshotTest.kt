@@ -4,9 +4,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -273,6 +276,99 @@ class TunerScreenshotTest {
                     painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_foreground),
                     contentDescription = "App Icon",
                     modifier = Modifier.size(108.dp)
+                )
+            }
+        }
+        
+        composeTestRule.waitForIdle()
+        composeTestRule.onRoot().captureRoboImage()
+    }
+    
+    @Ignore("Screenshot test - run locally only")
+    @Test
+    fun appIcon_circular_mask() {
+        composeTestRule.setContent {
+            Box(
+                modifier = Modifier
+                    .size(192.dp)
+                    .background(Color(0xFFF5F5F5)),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_background),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(108.dp)
+                        .clip(CircleShape)
+                )
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = "App Icon - Circular Mask",
+                    modifier = Modifier
+                        .size(108.dp)
+                        .clip(CircleShape)
+                )
+            }
+        }
+        
+        composeTestRule.waitForIdle()
+        composeTestRule.onRoot().captureRoboImage()
+    }
+    
+    @Ignore("Screenshot test - run locally only")
+    @Test
+    fun appIcon_squircle_mask() {
+        composeTestRule.setContent {
+            Box(
+                modifier = Modifier
+                    .size(192.dp)
+                    .background(Color(0xFFF5F5F5)),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_background),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(108.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                )
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = "App Icon - Squircle Mask",
+                    modifier = Modifier
+                        .size(108.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                )
+            }
+        }
+        
+        composeTestRule.waitForIdle()
+        composeTestRule.onRoot().captureRoboImage()
+    }
+    
+    @Ignore("Screenshot test - run locally only")
+    @Test
+    fun appIcon_roundedSquare_mask() {
+        composeTestRule.setContent {
+            Box(
+                modifier = Modifier
+                    .size(192.dp)
+                    .background(Color(0xFFF5F5F5)),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_background),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(108.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                )
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = "App Icon - Rounded Square Mask",
+                    modifier = Modifier
+                        .size(108.dp)
+                        .clip(RoundedCornerShape(16.dp))
                 )
             }
         }

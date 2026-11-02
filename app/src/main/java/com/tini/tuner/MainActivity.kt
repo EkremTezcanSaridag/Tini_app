@@ -4,6 +4,7 @@ import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -28,14 +29,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 class MainActivity : ComponentActivity() {
     
     private var hasAudioPermission by mutableStateOf(false)
+    private var viewModel: TunerViewModel? = null
     
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         hasAudioPermission = isGranted
+        if (!isGranted) {
+            // Permission denied - stop any ongoing listening
+            viewModel?.stopListening()
+        }
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         installSplashScreen()
         super.onCreate(savedInstanceState)
         
@@ -45,21 +52,24 @@ class MainActivity : ComponentActivity() {
         setContent {
             TiniTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .systemBarsPadding(),
                     color = AppColors.Background
                 ) {
                     if (hasAudioPermission) {
-                        val viewModel: TunerViewModel = viewModel()
-                        val uiState by viewModel.uiState.collectAsState()
+                        val vm: TunerViewModel = viewModel()
+                        viewModel = vm
+                        val uiState by vm.uiState.collectAsState()
                         
                         TunerScreen(
                             uiState = uiState,
-                            onStartListening = { viewModel.startListening() },
-                            onStopListening = { viewModel.stopListening() },
-                            onStringSelected = { viewModel.selectString(it) },
-                            onAutoModeToggle = { viewModel.setAutoMode(it) },
-                            onTuningChanged = { viewModel.setTuning(it) },
-                            onA4ReferenceChanged = { viewModel.setA4Reference(it) }
+                            onStartListening = { vm.startListening() },
+                            onStopListening = { vm.stopListening() },
+                            onStringSelected = { vm.selectString(it) },
+                            onAutoModeToggle = { vm.setAutoMode(it) },
+                            onTuningChanged = { vm.setTuning(it) },
+                            onA4ReferenceChanged = { vm.setA4Reference(it) }
                         )
                     } else {
                         ProfessionalPermissionScreen(
@@ -70,6 +80,20 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+    
+    override fun onStop() {
+        super.onStop()
+        // Stop audio capture when app goes to background
+        viewModel?.stopListening()
+    }
+    
+    override fun onStart() {
+        super.onStart()
+        // Resume if we had permission and were listening before
+        if (hasAudioPermission) {
+            viewModel?.startListening()
         }
     }
 }

@@ -5,11 +5,7 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Monochrome version: filled guitar pick with sine wave -->
-    <path
-        android:pathData="M54,22 C42,22 32,24 25,31 C18,38 14,47 14,57 C14,67 18,76 25,83 Q35,93 54,96 Q73,93 83,83 C90,76 94,67 94,57 C94,47 90,38 83,31 C76,24 66,22 54,22 Z"
-        android:fillColor="#000000"/>
-    
+    <!-- Monochrome: just the sine wave -->
     <path
         android:pathData="M32,54 Q38,42 44,54 Q50,66 56,54 Q62,42 68,54 Q74,66 80,54"
         android:strokeColor="#FFFFFF"

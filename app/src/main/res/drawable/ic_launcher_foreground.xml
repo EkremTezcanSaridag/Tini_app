@@ -5,13 +5,11 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Bold rounded guitar pick filled in near-black #1D1D1F, filling ~60% of safe zone -->
-    <!-- Safe zone is 66dp (radius 33dp from center 54,54) so pick should be ~40dp radius -->
-    <path
-        android:pathData="M54,22 C42,22 32,24 25,31 C18,38 14,47 14,57 C14,67 18,76 25,83 Q35,93 54,96 Q73,93 83,83 C90,76 94,67 94,57 C94,47 90,38 83,31 C76,24 66,22 54,22 Z"
-        android:fillColor="#1D1D1F"/>
+    <!-- Foreground: white sine wave + green dot within safe zone (66dp) -->
+    <!-- Canvas center is 54,54. Safe zone is 33dp radius from center. -->
+    <!-- Keep all content within inner 72dp (36dp radius from center) -->
     
-    <!-- Clean white sine wave through the middle -->
+    <!-- Clean white sine wave centered in safe zone -->
     <path
         android:pathData="M32,54 Q38,42 44,54 Q50,66 56,54 Q62,42 68,54 Q74,66 80,54"
         android:strokeColor="#FFFFFF"
@@ -20,8 +18,8 @@
         android:strokeLineCap="round"
         android:strokeLineJoin="round"/>
     
-    <!-- Small green accent dot at top right of pick -->
+    <!-- Small green accent dot positioned within safe zone -->
     <path
-        android:pathData="M75,36 m-5,0 a5,5 0,1 1,10 0 a5,5 0,1 1,-10 0"
+        android:pathData="M70,42 m-4,0 a4,4 0,1 1,8 0 a4,4 0,1 1,-8 0"
         android:fillColor="#34C759"/>
 </vector>
