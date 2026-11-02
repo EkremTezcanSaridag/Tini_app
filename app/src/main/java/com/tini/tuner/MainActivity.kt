@@ -26,6 +26,11 @@ import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+enum class Screen {
+    Tuner,
+    Metronome
+}
+
 class MainActivity : ComponentActivity() {
     
     private var hasAudioPermission by mutableStateOf(false)
@@ -51,32 +56,44 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             TiniTheme {
+                var currentScreen by remember { mutableStateOf<Screen>(Screen.Tuner) }
+                
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
                         .systemBarsPadding(),
                     color = AppColors.Background
                 ) {
-                    if (hasAudioPermission) {
-                        val vm: TunerViewModel = viewModel()
-                        viewModel = vm
-                        val uiState by vm.uiState.collectAsState()
-                        
-                        TunerScreen(
-                            uiState = uiState,
-                            onStartListening = { vm.startListening() },
-                            onStopListening = { vm.stopListening() },
-                            onStringSelected = { vm.selectString(it) },
-                            onAutoModeToggle = { vm.setAutoMode(it) },
-                            onTuningChanged = { vm.setTuning(it) },
-                            onA4ReferenceChanged = { vm.setA4Reference(it) }
-                        )
-                    } else {
-                        ProfessionalPermissionScreen(
-                            onRequestPermission = {
-                                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    when (currentScreen) {
+                        Screen.Tuner -> {
+                            if (hasAudioPermission) {
+                                val vm: TunerViewModel = viewModel()
+                                viewModel = vm
+                                val uiState by vm.uiState.collectAsState()
+                                
+                                TunerScreen(
+                                    uiState = uiState,
+                                    onStartListening = { vm.startListening() },
+                                    onStopListening = { vm.stopListening() },
+                                    onStringSelected = { vm.selectString(it) },
+                                    onAutoModeToggle = { vm.setAutoMode(it) },
+                                    onTuningChanged = { vm.setTuning(it) },
+                                    onA4ReferenceChanged = { vm.setA4Reference(it) },
+                                    onMetronomeClick = { currentScreen = Screen.Metronome }
+                                )
+                            } else {
+                                ProfessionalPermissionScreen(
+                                    onRequestPermission = {
+                                        requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    }
+                                )
                             }
-                        )
+                        }
+                        Screen.Metronome -> {
+                            MetronomeScreen(
+                                onBackClick = { currentScreen = Screen.Tuner }
+                            )
+                        }
                     }
                 }
             }

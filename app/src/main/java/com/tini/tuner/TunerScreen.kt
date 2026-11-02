@@ -42,7 +42,8 @@ fun TunerScreen(
     onStringSelected: (Int) -> Unit,
     onAutoModeToggle: (Boolean) -> Unit,
     onTuningChanged: (TuningType) -> Unit,
-    onA4ReferenceChanged: (Float) -> Unit
+    onA4ReferenceChanged: (Float) -> Unit,
+    onMetronomeClick: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -85,7 +86,8 @@ fun TunerScreen(
             MinimalTopBar(
                 tuningName = uiState.currentTuning.displayName,
                 onTuningClick = { showTuningSheet = true },
-                onSettingsClick = { showSettingsSheet = true }
+                onSettingsClick = { showSettingsSheet = true },
+                onMetronomeClick = onMetronomeClick
             )
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -187,7 +189,8 @@ fun TunerScreen(
 fun MinimalTopBar(
     tuningName: String,
     onTuningClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onMetronomeClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -243,8 +246,15 @@ fun MinimalTopBar(
             }
         }
         
-        // Empty space on right for balance
-        Spacer(modifier = Modifier.size(48.dp))
+        // Metronome icon on right
+        IconButton(onClick = onMetronomeClick) {
+            Icon(
+                imageVector = Icons.Default.Settings, // Placeholder, will use a better icon
+                contentDescription = "Metronome",
+                tint = AppColors.TextSecondary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
 }
 
