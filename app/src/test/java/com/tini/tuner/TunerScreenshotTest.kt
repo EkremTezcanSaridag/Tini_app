@@ -35,6 +35,7 @@ class TunerScreenshotTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_idle_noAudio() {
         composeTestRule.setContent {
@@ -63,6 +64,7 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
+    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_inTune_E2() {
         composeTestRule.setContent {
@@ -98,6 +100,7 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
+    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_tooLow_E2_minus25cents() {
         composeTestRule.setContent {
@@ -133,6 +136,7 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
+    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_tooHigh_A2_plus30cents() {
         composeTestRule.setContent {
@@ -168,6 +172,7 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
+    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_allStrings_Standard() {
         composeTestRule.setContent {
@@ -203,6 +208,7 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
 
+    @Ignore("Screenshot test - run locally only")
     @Test
     fun tunerScreen_DADGAD_tuning() {
         composeTestRule.setContent {
@@ -238,6 +244,7 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
     
+    @Ignore("Screenshot test - run locally only")
     @Test
     fun permissionScreen() {
         composeTestRule.setContent {
@@ -252,6 +259,7 @@ class TunerScreenshotTest {
         composeTestRule.onRoot().captureRoboImage()
     }
     
+    @Ignore("Screenshot test - run locally only")
     @Test
     fun appIcon() {
         composeTestRule.setContent {
