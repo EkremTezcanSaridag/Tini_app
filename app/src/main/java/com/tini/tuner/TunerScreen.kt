@@ -82,7 +82,7 @@ fun TunerScreen(
                 onSettingsClick = { showSettingsSheet = true }
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Main tuner gauge
             Box(
@@ -100,7 +100,7 @@ fun TunerScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             // String selector
             ProfessionalStringSelector(
@@ -204,7 +204,9 @@ fun ProfessionalTopBar(
     onSettingsClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -214,34 +216,43 @@ fun ProfessionalTopBar(
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = AppColors.TextPrimary,
-            fontFamily = ManropeFont
+            fontFamily = ManropeFont,
+            modifier = Modifier.weight(1f, fill = false)
         )
         
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Spacer(modifier = Modifier.width(8.dp))
+        
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.wrapContentWidth()
+        ) {
             // Tuning selector
             Surface(
                 onClick = onTuningClick,
                 shape = RoundedCornerShape(12.dp),
                 color = AppColors.Surface,
-                border = BorderStroke(1.dp, AppColors.PrimaryIndigo.copy(alpha = 0.3f))
+                border = BorderStroke(1.dp, AppColors.PrimaryIndigo.copy(alpha = 0.3f)),
+                modifier = Modifier.wrapContentWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Tune,
                         contentDescription = "Tuning",
                         tint = AppColors.PrimaryIndigo,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(15.dp)
                     )
                     Text(
                         text = tuningName,
                         color = AppColors.PrimaryIndigo,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        fontFamily = ManropeFont
+                        fontSize = 13.sp,
+                        fontFamily = ManropeFont,
+                        maxLines = 1
                     )
                 }
             }
@@ -249,7 +260,7 @@ fun ProfessionalTopBar(
             // Settings button
             Surface(
                 onClick = onSettingsClick,
-                modifier = Modifier.size(44.dp),
+                modifier = Modifier.size(40.dp),
                 shape = RoundedCornerShape(12.dp),
                 color = AppColors.Surface
             ) {
@@ -258,7 +269,7 @@ fun ProfessionalTopBar(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Settings",
                         tint = AppColors.TextSecondary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(19.dp)
                     )
                 }
             }
@@ -305,14 +316,15 @@ fun ProfessionalGauge(
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Arc gauge
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.5f),
-            contentAlignment = Alignment.Center
+                .aspectRatio(1.8f),
+            contentAlignment = Alignment.BottomCenter
         ) {
             // Pulse effect when listening
             if (isListening && tuningState != null) {
@@ -349,7 +361,6 @@ fun ProfessionalGauge(
                 for (segment in 0..100) {
                     val segmentAngle = startAngle + segment * sweepAngle / 100f
                     val centsPos = -50 + segment
-                    val normalizedPos = abs(centsPos) / 50f
                     
                     val segmentColor = when {
                         abs(centsPos) < 8 -> AppColors.AccentGreen
@@ -437,28 +448,27 @@ fun ProfessionalGauge(
                     cap = StrokeCap.Round
                 )
                 
-                // Center knob
+                // Center knob - proper pivot point
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(Color.White, Color.White.copy(alpha = 0.8f))
                     ),
-                    radius = 18f,
+                    radius = 16f,
                     center = Offset(centerX, centerY)
                 )
                 drawCircle(
                     color = AppColors.Surface,
-                    radius = 12f,
+                    radius = 10f,
                     center = Offset(centerX, centerY)
                 )
             }
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
-        
         // Note and status display
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.scale(inTuneScale)
+            modifier = Modifier.scale(inTuneScale),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             // Large note display
             Text(
@@ -473,13 +483,11 @@ fun ProfessionalGauge(
             if (frequency != null) {
                 Text(
                     text = "%.1f Hz".format(frequency),
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     color = AppColors.TextSecondary,
                     fontFamily = ManropeFont
                 )
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
             
             // Cents display
             val centsColor = when {
@@ -493,15 +501,13 @@ fun ProfessionalGauge(
                     val sign = if (cents > 0) "+" else ""
                     "$sign${cents.toInt()} cent"
                 } else "-- cent",
-                fontSize = 24.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = centsColor,
                 fontFamily = ManropeFont
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Status text
+            // Status text - ALWAYS visible with high contrast
             if (tuningState != null) {
                 val (statusText, statusColor) = when (tuningState.direction) {
                     TuningDirection.TOO_LOW -> "Teli sık ↑" to AppColors.AccentRed
@@ -518,7 +524,23 @@ fun ProfessionalGauge(
                         text = statusText,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = statusColor,
+                        color = statusColor,  // Direct color, not alpha - always visible
+                        fontFamily = ManropeFont,
+                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 10.dp)
+                    )
+                }
+            } else {
+                // Placeholder when no tuning state
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = AppColors.Surface,
+                    border = BorderStroke(1.dp, AppColors.TextSecondary.copy(alpha = 0.3f))
+                ) {
+                    Text(
+                        text = "Dinleniyor...",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.TextSecondary,
                         fontFamily = ManropeFont,
                         modifier = Modifier.padding(horizontal = 28.dp, vertical = 10.dp)
                     )
@@ -574,55 +596,59 @@ fun StringButton(
         label = "scale"
     )
     
-    Surface(
-        onClick = onClick,
-        modifier = Modifier
-            .size(52.dp)
-            .scale(scale),
-        shape = CircleShape,
-        color = if (isSelected) {
-            AppColors.PrimaryIndigo
-        } else {
-            AppColors.SurfaceElevated
-        },
-        border = if (isSelected) {
-            BorderStroke(2.dp, AppColors.PrimaryAmber.copy(alpha = 0.5f))
-        } else {
-            BorderStroke(1.dp, AppColors.TextSecondary.copy(alpha = 0.2f))
-        }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = number.toString(),
-                    fontSize = 10.sp,
-                    color = if (isSelected) Color.White.copy(alpha = 0.7f) else AppColors.TextSecondary,
-                    fontFamily = ManropeFont
-                )
+        // String number label above the circle
+        Text(
+            text = number.toString(),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (isSelected) AppColors.PrimaryIndigo else AppColors.TextSecondary.copy(alpha = 0.7f),
+            fontFamily = ManropeFont
+        )
+        
+        // Circle with note letter
+        Surface(
+            onClick = onClick,
+            modifier = Modifier
+                .size(52.dp)
+                .scale(scale),
+            shape = CircleShape,
+            color = if (isSelected) {
+                AppColors.PrimaryIndigo
+            } else {
+                AppColors.SurfaceElevated
+            },
+            border = if (isSelected) {
+                BorderStroke(2.dp, AppColors.PrimaryAmber.copy(alpha = 0.5f))
+            } else {
+                BorderStroke(1.dp, AppColors.TextSecondary.copy(alpha = 0.2f))
+            }
+        ) {
+            Box(contentAlignment = Alignment.Center) {
                 Text(
                     text = note,
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isSelected) Color.White else AppColors.TextPrimary,
                     fontFamily = ManropeFont
                 )
-            }
-            
-            if (isTuned) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Tuned",
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 4.dp, y = (-4).dp)
-                        .size(16.dp)
-                        .background(AppColors.AccentGreen, CircleShape)
-                        .padding(2.dp),
-                    tint = Color.White
-                )
+                
+                if (isTuned) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Tuned",
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 6.dp, y = (-6).dp)
+                            .size(18.dp)
+                            .background(AppColors.AccentGreen, CircleShape)
+                            .padding(3.dp),
+                        tint = Color.White
+                    )
+                }
             }
         }
     }

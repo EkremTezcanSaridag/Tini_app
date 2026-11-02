@@ -5,26 +5,58 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Guitar pick / tuning peg shape -->
+    <!-- Professional guitar pick silhouette with smooth gradient -->
+    <!-- Base gradient layer (deep indigo) -->
     <path
-        android:fillColor="#4F46E5"
-        android:pathData="M54,24 C54,24 70,28 72,46 C74,64 66,76 54,84 C42,76 34,64 36,46 C38,28 54,24 54,24 Z"/>
+        android:pathData="M54,28 C45,28 38,30 33,35 C28,40 25,47 25,55 C25,63 28,70 33,75 Q40,82 54,84 Q68,82 75,75 C80,70 83,63 83,55 C83,47 80,40 75,35 C70,30 63,28 54,28 Z"
+        android:fillColor="#4338CA"/>
     
-    <!-- Sound wave / frequency bars -->
+    <!-- Mid gradient layer -->
     <path
-        android:fillColor="#F59E0B"
-        android:pathData="M44,48 L44,60 M48,44 L48,64 M52,40 L52,68 M56,40 L56,68 M60,44 L60,64 M64,48 L64,60"
-        android:strokeWidth="3"
-        android:strokeColor="#F59E0B"
+        android:pathData="M54,31 C46,31 40,33 36,37.5 C32,42 29,48 29,55 C29,62 32,68 36,72.5 Q42,78 54,80 Q66,78 72,72.5 C76,68 79,62 79,55 C79,48 76,42 72,37.5 C68,33 62,31 54,31 Z"
+        android:fillColor="#6366F1"/>
+    
+    <!-- Top gradient layer (violet) -->
+    <path
+        android:pathData="M54,34 C47,34 42,36 38.5,40 C35,44 33,49.5 33,55 C33,60.5 35,66 38.5,70 Q43.5,75 54,77 Q64.5,75 69.5,70 C73,66 75,60.5 75,55 C75,49.5 73,44 69.5,40 C66,36 61,34 54,34 Z"
+        android:fillColor="#7C3AED"/>
+    
+    <!-- Clean white tuning fork with smooth curves -->
+    <!-- Left prong -->
+    <path
+        android:pathData="M46,46 L46,62"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
         android:strokeLineCap="round"/>
     
-    <!-- Stylized 'T' integrated -->
+    <!-- Right prong -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M48,46 L60,46 L60,49 L55,49 L55,62 L52,62 L52,49 L48,49 Z"/>
+        android:pathData="M62,46 L62,62"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"/>
     
-    <!-- Tuning peg circle -->
+    <!-- Top curve connecting prongs -->
     <path
-        android:fillColor="#F59E0B"
-        android:pathData="M54,54 m-3,0 a3,3 0,1 1,6 0 a3,3 0,1 1,-6 0"/>
+        android:pathData="M46,46 Q54,50 62,46"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    
+    <!-- Base connection -->
+    <path
+        android:pathData="M50,62 L50,68 Q54,70 58,68 L58,62"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    
+    <!-- Subtle sound wave accent -->
+    <path
+        android:pathData="M68,55 Q70,55 71,54 M68,58 Q70,58 71,57 M68,52 Q70,52 71,51"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.4"/>
 </vector>

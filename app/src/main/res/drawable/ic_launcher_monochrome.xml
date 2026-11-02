@@ -5,19 +5,35 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Monochrome version for Android 13+ themed icons -->
+    <!-- Monochrome guitar pick with tuning fork for Android 13+ themed icons -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,24 C54,24 70,28 72,46 C74,64 66,76 54,84 C42,76 34,64 36,46 C38,28 54,24 54,24 Z"/>
+        android:pathData="M54,28 C45,28 38,30 33,35 C28,40 25,47 25,55 C25,63 28,70 33,75 Q40,82 54,84 Q68,82 75,75 C80,70 83,63 83,55 C83,47 80,40 75,35 C70,30 63,28 54,28 Z"
+        android:fillColor="#FFFFFF"/>
     
+    <!-- Tuning fork in black (will be inverted for themed icons) -->
     <path
-        android:fillColor="#000000"
-        android:pathData="M48,46 L60,46 L60,49 L55,49 L55,62 L52,62 L52,49 L48,49 Z"/>
-    
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M44,48 L44,60 M48,44 L48,64 M52,42 L52,66 M56,42 L56,66 M60,44 L60,64 M64,48 L64,60"
-        android:strokeWidth="2.5"
-        android:strokeColor="#FFFFFF"
+        android:pathData="M46,46 L46,62"
+        android:strokeColor="#000000"
+        android:strokeWidth="3.5"
         android:strokeLineCap="round"/>
+    
+    <path
+        android:pathData="M62,46 L62,62"
+        android:strokeColor="#000000"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"/>
+    
+    <path
+        android:pathData="M46,46 Q54,50 62,46"
+        android:strokeColor="#000000"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    
+    <path
+        android:pathData="M50,62 L50,68 Q54,70 58,68 L58,62"
+        android:strokeColor="#000000"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
 </vector>
