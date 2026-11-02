@@ -30,6 +30,16 @@
     <td align="center"><b>Tiz (+30 cent)</b></td>
     <td align="center"><b>Mikrofon İzni</b></td>
   </tr>
+  <tr>
+    <td><img src="docs/screenshots/metronome.png" width="220" alt="Metronom"/></td>
+    <td><img src="docs/screenshots/chords.png" width="220" alt="Akorlar"/></td>
+    <td colspan="2"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Metronom</b></td>
+    <td align="center"><b>Akor Kütüphanesi</b></td>
+    <td colspan="2"></td>
+  </tr>
 </table>
 
 ---
