@@ -44,8 +44,11 @@ fun TunerScreen(
     onTuningChanged: (TuningType) -> Unit,
     onInstrumentChanged: (Instrument) -> Unit = {},
     onA4ReferenceChanged: (Float) -> Unit,
+    onPolyphonicToggle: (Boolean) -> Unit = {},
     onMetronomeClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
+    onChordsClick: () -> Unit = {},
+    onProfilesClick: () -> Unit = {},
     themeRepository: ThemeRepository? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -91,7 +94,9 @@ fun TunerScreen(
                 onTuningClick = { showTuningSheet = true },
                 onSettingsClick = { showSettingsSheet = true },
                 onMetronomeClick = onMetronomeClick,
-                onHistoryClick = onHistoryClick
+                onHistoryClick = onHistoryClick,
+                onChordsClick = onChordsClick,
+                onProfilesClick = onProfilesClick
             )
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -109,6 +114,26 @@ fun TunerScreen(
                     frequency = uiState.detectedFrequency,
                     cents = uiState.tuningState?.cents,
                     isListening = uiState.isListening
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            SpectrumVisualization(
+                magnitudes = uiState.spectrumMagnitudes,
+                peaks = uiState.detectedPeaks
+            )
+            
+            if (uiState.polyphonicMode && uiState.multiStringMatches.isNotEmpty()) {
+                Text(
+                    text = "Çoklu tel: " + uiState.multiStringMatches.joinToString { (idx, freq) ->
+                        val names = getStringNames(uiState.currentTuning)
+                        "${names.getOrElse(idx) { "?" }} ${"%.0f".format(freq)}Hz"
+                    },
+                    fontSize = 12.sp,
+                    color = AppColors.TextSecondary,
+                    fontFamily = InterFont,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
             
@@ -184,7 +209,9 @@ fun TunerScreen(
                         showSettingsSheet = false
                     }
                 },
-                themeRepository = themeRepository
+                themeRepository = themeRepository,
+                polyphonicMode = uiState.polyphonicMode,
+                onPolyphonicToggle = onPolyphonicToggle
             )
         }
     }
@@ -196,7 +223,9 @@ fun MinimalTopBar(
     onTuningClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onMetronomeClick: () -> Unit = {},
-    onHistoryClick: () -> Unit = {}
+    onHistoryClick: () -> Unit = {},
+    onChordsClick: () -> Unit = {},
+    onProfilesClick: () -> Unit = {}
 ) {
     Column {
         Row(
@@ -295,6 +324,18 @@ fun MinimalTopBar(
                     color = AppColors.TextSecondary,
                     fontFamily = InterFont
                 )
+            }
+            
+            Text(text = "•", color = AppColors.Separator, fontSize = 13.sp)
+            
+            TextButton(onClick = onChordsClick, modifier = Modifier.padding(horizontal = 4.dp)) {
+                Text("Akorlar", fontSize = 13.sp, color = AppColors.TextSecondary, fontFamily = InterFont)
+            }
+            
+            Text(text = "•", color = AppColors.Separator, fontSize = 13.sp)
+            
+            TextButton(onClick = onProfilesClick, modifier = Modifier.padding(horizontal = 4.dp)) {
+                Text("Profil", fontSize = 13.sp, color = AppColors.TextSecondary, fontFamily = InterFont)
             }
         }
     }
@@ -756,7 +797,9 @@ fun MinimalSettingsSheet(
     currentA4: Float,
     onA4Changed: (Float) -> Unit,
     onDismiss: () -> Unit,
-    themeRepository: ThemeRepository? = null
+    themeRepository: ThemeRepository? = null,
+    polyphonicMode: Boolean = false,
+    onPolyphonicToggle: (Boolean) -> Unit = {}
 ) {
     var sliderValue by remember { mutableFloatStateOf(currentA4) }
     val currentTheme by (themeRepository?.themeModeFlow?.collectAsState(initial = ThemeMode.LIGHT) ?: remember { mutableStateOf(ThemeMode.LIGHT) })
@@ -822,6 +865,26 @@ fun MinimalSettingsSheet(
                     )
                 }
             }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        Divider(color = colors.Separator, thickness = 0.5.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text("Çoklu tel analizi", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.TextPrimary, fontFamily = InterFont)
+                Text("FFT ile birden fazla tel", fontSize = 12.sp, color = colors.TextSecondary, fontFamily = InterFont)
+            }
+            Switch(
+                checked = polyphonicMode,
+                onCheckedChange = onPolyphonicToggle,
+                colors = SwitchDefaults.colors(checkedTrackColor = colors.AccentBlue)
+            )
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -913,5 +976,46 @@ private fun getStringNames(tuning: TuningType): List<String> {
         TuningType.BASS_5STRING -> listOf("B", "E", "A", "D", "G")
         TuningType.UKULELE_C -> listOf("G", "C", "E", "A")
         TuningType.UKULELE_D -> listOf("A", "D", "F#", "B")
+    }
+}
+
+@Composable
+fun SpectrumVisualization(
+    magnitudes: FloatArray?,
+    peaks: List<SpectrumPeak>
+) {
+    val colors = AppColors
+    if (magnitudes == null) return
+    
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+    ) {
+        val barCount = 64
+        val step = magnitudes.size / barCount
+        val maxMag = magnitudes.maxOrNull()?.coerceAtLeast(0.001f) ?: 1f
+        val barWidth = size.width / barCount
+        
+        for (i in 0 until barCount) {
+            val mag = magnitudes[i * step]
+            val h = (mag / maxMag) * size.height * 0.9f
+            drawRect(
+                color = colors.AccentBlue.copy(alpha = 0.35f),
+                topLeft = Offset(i * barWidth, size.height - h),
+                size = androidx.compose.ui.geometry.Size(barWidth * 0.8f, h)
+            )
+        }
+        
+        peaks.forEach { peak ->
+            val bin = (peak.frequency * magnitudes.size / 44100f).toInt().coerceIn(0, magnitudes.size - 1)
+            val x = (bin.toFloat() / magnitudes.size) * size.width
+            drawLine(
+                color = colors.AccentGreen,
+                start = Offset(x, 0f),
+                end = Offset(x, size.height),
+                strokeWidth = 2f
+            )
+        }
     }
 }

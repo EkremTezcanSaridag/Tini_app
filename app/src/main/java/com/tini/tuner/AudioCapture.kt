@@ -24,7 +24,7 @@ class AudioCapture {
     private val smoothingWindow = mutableListOf<Float>()
     private val smoothingSize = 3
     
-    fun startCapture(): Flow<Float?> = flow {
+    fun startCapture(): Flow<AudioFrame> = flow {
         val minBufferSize = AudioRecord.getMinBufferSize(
             SAMPLE_RATE,
             CHANNEL_CONFIG,
@@ -44,7 +44,7 @@ class AudioCapture {
             )
             
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                emit(null)
+                emit(AudioFrame(null))
                 return@flow
             }
             
@@ -55,6 +55,7 @@ class AudioCapture {
                 
                 if (readResult > 0) {
                     val pitch = pitchDetector.detectPitch(audioBuffer)
+                    val (magnitudes, peaks) = FftAnalyzer.analyze(audioBuffer, SAMPLE_RATE)
                     
                     if (pitch != null) {
                         smoothingWindow.add(pitch)
@@ -63,9 +64,9 @@ class AudioCapture {
                         }
                         
                         val smoothedPitch = smoothingWindow.average().toFloat()
-                        emit(smoothedPitch)
+                        emit(AudioFrame(smoothedPitch, magnitudes, peaks))
                     } else {
-                        emit(null)
+                        emit(AudioFrame(null, magnitudes, peaks))
                     }
                 }
             }

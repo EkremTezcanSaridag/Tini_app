@@ -16,7 +16,11 @@ data class TunerUiState(
     val currentTuning: TuningType = TuningType.STANDARD,
     val a4Reference: Float = 440f,
     val tuningState: TuningState? = null,
-    val detectedFrequency: Float? = null
+    val detectedFrequency: Float? = null,
+    val spectrumMagnitudes: FloatArray? = null,
+    val detectedPeaks: List<SpectrumPeak> = emptyList(),
+    val multiStringMatches: List<Pair<Int, Float>> = emptyList(),
+    val polyphonicMode: Boolean = false
 )
 
 class TunerViewModel : ViewModel() {
@@ -44,20 +48,24 @@ class TunerViewModel : ViewModel() {
         smoothedFrequency = null // Reset smoothing on start
         
         captureJob = viewModelScope.launch {
-            audioCapture.startCapture().collect { frequency ->
-                if (frequency != null) {
-                    // Apply EMA smoothing
+            audioCapture.startCapture().collect { frame ->
+                if (frame.frequency != null) {
                     smoothedFrequency = if (smoothedFrequency == null) {
-                        frequency
+                        frame.frequency
                     } else {
-                        smoothedFrequency!! * (1 - smoothingFactor) + frequency * smoothingFactor
+                        smoothedFrequency!! * (1 - smoothingFactor) + frame.frequency * smoothingFactor
                     }
-                    processFrequency(smoothedFrequency!!)
+                    processFrequency(smoothedFrequency!!, frame)
                 } else {
                     smoothedFrequency = null
                     _uiState.value = _uiState.value.copy(
                         tuningState = null,
-                        detectedFrequency = null
+                        detectedFrequency = null,
+                        spectrumMagnitudes = frame.magnitudes,
+                        detectedPeaks = frame.peaks,
+                        multiStringMatches = if (_uiState.value.polyphonicMode) {
+                            FftAnalyzer.matchPeaksToStrings(frame.peaks, _uiState.value.currentTuning)
+                        } else emptyList()
                     )
                 }
             }
@@ -75,11 +83,11 @@ class TunerViewModel : ViewModel() {
         )
     }
     
-    private fun processFrequency(frequency: Float) {
+    private fun processFrequency(frequency: Float, frame: AudioFrame) {
         val currentState = _uiState.value
         val targetFrequency = currentState.currentTuning.frequencies[currentState.selectedStringIndex]
         
-        if (currentState.autoMode) {
+        if (currentState.autoMode && !currentState.polyphonicMode) {
             val nearestStringIndex = TuningUtils.findNearestString(frequency, currentState.currentTuning)
             if (nearestStringIndex != currentState.selectedStringIndex) {
                 _uiState.value = currentState.copy(selectedStringIndex = nearestStringIndex)
@@ -91,6 +99,10 @@ class TunerViewModel : ViewModel() {
             targetFrequency,
             currentState.a4Reference
         )
+        
+        val multiMatches = if (currentState.polyphonicMode) {
+            FftAnalyzer.matchPeaksToStrings(frame.peaks, currentState.currentTuning)
+        } else emptyList()
         
         // Save to history when in-tune (max once every 3 seconds)
         if (tuningState.isInTune && historyRepository != null) {
@@ -117,8 +129,15 @@ class TunerViewModel : ViewModel() {
         
         _uiState.value = _uiState.value.copy(
             tuningState = tuningState,
-            detectedFrequency = frequency
+            detectedFrequency = frequency,
+            spectrumMagnitudes = frame.magnitudes,
+            detectedPeaks = frame.peaks,
+            multiStringMatches = multiMatches
         )
+    }
+    
+    fun setPolyphonicMode(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(polyphonicMode = enabled, autoMode = if (enabled) false else _uiState.value.autoMode)
     }
     
     private fun getStringNamesForTuning(tuning: TuningType): List<String> {

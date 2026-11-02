@@ -33,7 +33,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 enum class Screen {
     Tuner,
     Metronome,
-    History
+    History,
+    Chords,
+    Profiles
 }
 
 class MainActivity : ComponentActivity() {
@@ -42,6 +44,7 @@ class MainActivity : ComponentActivity() {
     private var viewModel: TunerViewModel? = null
     private lateinit var historyRepository: TuningHistoryRepository
     private lateinit var themeRepository: ThemeRepository
+    private lateinit var profileRepository: ProfileRepository
     
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -60,6 +63,7 @@ class MainActivity : ComponentActivity() {
         
         historyRepository = TuningHistoryRepository(applicationContext)
         themeRepository = ThemeRepository(applicationContext)
+        profileRepository = ProfileRepository(applicationContext)
         
         hasAudioPermission = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == 
                 android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -82,19 +86,26 @@ class MainActivity : ComponentActivity() {
                         .systemBarsPadding(),
                     color = AppColors.Background
                 ) {
-                    when (currentScreen) {
-                        Screen.Tuner -> {
-                            if (hasAudioPermission) {
-                                val vm: TunerViewModel = viewModel()
-                                viewModel = vm
-                                
-                                // Set history repository in ViewModel
-                                LaunchedEffect(Unit) {
-                                    vm.setHistoryRepository(historyRepository)
-                                }
-                                
-                                val uiState by vm.uiState.collectAsState()
-                                
+                    if (hasAudioPermission) {
+                        val vm: TunerViewModel = viewModel()
+                        viewModel = vm
+                        LaunchedEffect(Unit) {
+                            vm.setHistoryRepository(historyRepository)
+                        }
+                        val uiState by vm.uiState.collectAsState()
+
+                        LaunchedEffect(uiState.tuningState) {
+                            val state = uiState.tuningState ?: return@LaunchedEffect
+                            TiniWidgetPrefs.update(
+                                this@MainActivity,
+                                state.note,
+                                if (state.isInTune) "Akortlu" else if (state.cents < 0) "Pest" else "Tiz",
+                                state.cents
+                            )
+                        }
+
+                        when (currentScreen) {
+                            Screen.Tuner -> {
                                 TunerScreen(
                                     uiState = uiState,
                                     onStartListening = { vm.startListening() },
@@ -104,28 +115,52 @@ class MainActivity : ComponentActivity() {
                                     onTuningChanged = { vm.setTuning(it) },
                                     onInstrumentChanged = { vm.setInstrument(it) },
                                     onA4ReferenceChanged = { vm.setA4Reference(it) },
+                                    onPolyphonicToggle = { vm.setPolyphonicMode(it) },
                                     onMetronomeClick = { currentScreen = Screen.Metronome },
                                     onHistoryClick = { currentScreen = Screen.History },
+                                    onChordsClick = { currentScreen = Screen.Chords },
+                                    onProfilesClick = { currentScreen = Screen.Profiles },
                                     themeRepository = themeRepository
                                 )
-                            } else {
+                            }
+                            Screen.Metronome -> {
+                                MetronomeScreen(onBackClick = { currentScreen = Screen.Tuner })
+                            }
+                            Screen.History -> {
+                                HistoryScreen(
+                                    onBackClick = { currentScreen = Screen.Tuner },
+                                    repository = historyRepository
+                                )
+                            }
+                            Screen.Chords -> {
+                                ChordLibraryScreen(onBackClick = { currentScreen = Screen.Tuner })
+                            }
+                            Screen.Profiles -> {
+                                ProfilesScreen(
+                                    onBackClick = { currentScreen = Screen.Tuner },
+                                    repository = profileRepository,
+                                    currentUiState = uiState,
+                                    currentTheme = themeMode,
+                                    onSaveCurrent = {}
+                                )
+                            }
+                        }
+                    } else {
+                        when (currentScreen) {
+                            Screen.Tuner -> {
                                 ProfessionalPermissionScreen(
                                     onRequestPermission = {
                                         requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                     }
                                 )
                             }
-                        }
-                        Screen.Metronome -> {
-                            MetronomeScreen(
-                                onBackClick = { currentScreen = Screen.Tuner }
-                            )
-                        }
-                        Screen.History -> {
-                            HistoryScreen(
-                                onBackClick = { currentScreen = Screen.Tuner },
-                                repository = historyRepository
-                            )
+                            else -> {
+                                ProfessionalPermissionScreen(
+                                    onRequestPermission = {
+                                        requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    }
+                                )
+                            }
                         }
                     }
                 }

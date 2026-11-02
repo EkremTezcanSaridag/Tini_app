@@ -37,12 +37,18 @@
 ## ✨ Özellikler
 
 - **🎯 YIN Perde Algılama:** Yüksek hassasiyetli perde algılama algoritması ile profesyonel sonuçlar
-- **🎸 Çoklu Akort Desteği:** 5 farklı akort türü
-  - **Standart:** E A D G B E
-  - **Drop D:** D A D G B E
-  - **Yarım ton pes (Eb):** Eb Ab Db Gb Bb Eb
-  - **Open G:** D G D G B D
-  - **DADGAD:** D A D G A D
+- **🎸 Çoklu Akort Desteği:** 9 gitar + bas + ukulele akortları
+  - **Gitar:** Standart, Drop D, Drop C, Yarım ton pes (Eb), Drop Db, Open G, Open D, DADGAD, Double Drop D
+  - **Bas:** Standart (E A D G), Drop D, 5 Tel (B E A D G)
+  - **Ukulele:** C (GCEA), D (ADF#B)
+- **🎼 Metronom:** 40–240 BPM, sesli tik, görsel nabız
+- **📜 Akort geçmişi:** Otomatik kayıt, son 100 oturum
+- **🌓 Tema:** Açık (varsayılan), koyu, sistem
+- **🎵 Akor kütüphanesi:** 30 yaygın akor, Canvas diyagramları
+- **📊 Spektrum:** Gerçek zamanlı FFT görselleştirme
+- **🔀 Çoklu tel:** FFT çok-tepe analizi ile eşzamanlı tel eşleştirme
+- **💾 Profiller:** JSON kayıt ve paylaşım (Share intent)
+- **📱 Widget:** Ana ekranda son akort durumu
 - **✅ Hassas Akort:** ±5 cent toleransla tam akort göstergesi
 - **🎚️ A4 Referans Ayarı:** 430-450 Hz arası özelleştirilebilir (varsayılan: 440 Hz)
 - **🎭 Akıllı Modlar:**
@@ -216,9 +222,9 @@ Tini_app/
 
 ## 🚀 Yol Haritası
 
-### v2.1 ✅ (Mevcut Sürüm)
+### v2.1 ✅
 - [x] YIN perde algılama
-- [x] 5 akort türü desteği
+- [x] Temel akort türleri
 - [x] Otomatik/Manuel modlar
 - [x] A4 referans ayarı (430-450 Hz)
 - [x] Haptik geri bildirim
@@ -227,19 +233,24 @@ Tini_app/
 - [x] Edge-to-edge insets
 - [x] Yaşam döngüsü ses yönetimi
 
-### v2.2 🔜 (Planlanan)
-- [ ] Daha fazla akort türü (Half Step Down, Drop C, vs.)
-- [ ] Metronom özelliği
-- [ ] Akort geçmişi kaydetme
-- [ ] Koyu tema desteği
-- [ ] Widget desteği
-- [ ] Akor kütüphanesi
+### v2.2 ✅
+- [x] Daha fazla akort türü (Drop C, Open D, Double Drop D, vb.)
+- [x] Metronom özelliği
+- [x] Akort geçmişi kaydetme
+- [x] Koyu tema desteği (açık varsayılan + sistem)
+- [x] Widget desteği
+- [x] Akor kütüphanesi (~30 akor)
 
-### v3.0 💭 (Gelecek)
-- [ ] Çok kanallı ses analizi (her telin ayrı ayrı akort edilmesi)
-- [ ] Spektrum görselleştirme
-- [ ] Ses profili kaydetme ve paylaşma
-- [ ] Diğer enstrümanlar için destek (bas, ukulele, vs.)
+### v3.0 ✅ (Mevcut Sürüm)
+- [x] FFT çok-tepe / çoklu tel analizi
+- [x] Spektrum görselleştirme
+- [x] Ses/akort profili kaydetme ve paylaşma (JSON)
+- [x] Bas gitar ve ukulele desteği
+
+### Gelecek 💭
+- [ ] Daha zengin akor kütüphanesi ve arama
+- [ ] Profil içe aktarma
+- [ ] Gelişmiş widget yapılandırması
 
 ---
 
@@ -285,7 +296,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 2.1  
+**Versiyon:** 3.0  
 **Son Güncelleme:** 2 Kasım 2026
 
 </div>

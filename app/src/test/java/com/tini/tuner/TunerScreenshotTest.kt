@@ -376,21 +376,33 @@ class TunerScreenshotTest {
         composeTestRule.waitForIdle()
         composeTestRule.onRoot().captureRoboImage()
     }
+    
+    @Ignore("Screenshot test - run locally only")
+    @Test
+    fun metronomeScreen() {
+        composeTestRule.setContent {
+            TiniTheme {
+                MetronomeScreen(onBackClick = {})
+            }
+        }
+        composeTestRule.waitForIdle()
+        composeTestRule.onRoot().captureRoboImage()
+    }
+    
+    @Ignore("Screenshot test - run locally only")
+    @Test
+    fun chordLibraryScreen() {
+        composeTestRule.setContent {
+            TiniTheme {
+                ChordLibraryScreen(onBackClick = {})
+            }
+        }
+        composeTestRule.waitForIdle()
+        composeTestRule.onRoot().captureRoboImage()
+    }
 }
 
 @Composable
 private fun TiniTheme(content: @Composable () -> Unit) {
-    androidx.compose.material3.MaterialTheme(
-        colorScheme = androidx.compose.material3.lightColorScheme(
-            primary = AppColors.AccentBlue,
-            secondary = AppColors.AccentGreen,
-            background = AppColors.Background,
-            surface = AppColors.Surface,
-            onPrimary = androidx.compose.ui.graphics.Color.White,
-            onSecondary = androidx.compose.ui.graphics.Color.White,
-            onBackground = AppColors.TextPrimary,
-            onSurface = AppColors.TextPrimary
-        ),
-        content = content
-    )
+    com.tini.tuner.TiniTheme(isDark = false, content = content)
 }
