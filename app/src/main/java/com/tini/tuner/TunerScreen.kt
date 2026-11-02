@@ -43,7 +43,8 @@ fun TunerScreen(
     onAutoModeToggle: (Boolean) -> Unit,
     onTuningChanged: (TuningType) -> Unit,
     onA4ReferenceChanged: (Float) -> Unit,
-    onMetronomeClick: () -> Unit = {}
+    onMetronomeClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -87,7 +88,8 @@ fun TunerScreen(
                 tuningName = uiState.currentTuning.displayName,
                 onTuningClick = { showTuningSheet = true },
                 onSettingsClick = { showSettingsSheet = true },
-                onMetronomeClick = onMetronomeClick
+                onMetronomeClick = onMetronomeClick,
+                onHistoryClick = onHistoryClick
             )
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -190,70 +192,107 @@ fun MinimalTopBar(
     tuningName: String,
     onTuningClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onMetronomeClick: () -> Unit = {}
+    onMetronomeClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Settings icon on left
-        IconButton(onClick = onSettingsClick) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                tint = AppColors.TextSecondary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        
-        // Centered title and tuning selector
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Tını",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = AppColors.TextSecondary,
-                fontFamily = InterFont,
-                letterSpacing = 0.5.sp
-            )
-            
-            // Tuning selector as plain text with chevron
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = onTuningClick)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = tuningName,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = AppColors.TextPrimary,
-                    fontFamily = InterFont
-                )
+            // Settings icon on left
+            IconButton(onClick = onSettingsClick) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Ayarlar",
                     tint = AppColors.TextSecondary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
+            
+            // Centered title and tuning selector
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Tını",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = AppColors.TextSecondary,
+                    fontFamily = InterFont,
+                    letterSpacing = 0.5.sp
+                )
+                
+                // Tuning selector as plain text with chevron
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onTuningClick)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = tuningName,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppColors.TextPrimary,
+                        fontFamily = InterFont
+                    )
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = AppColors.TextSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+            
+            // Empty space for balance
+            Spacer(modifier = Modifier.size(48.dp))
         }
         
-        // Metronome icon on right
-        IconButton(onClick = onMetronomeClick) {
-            Icon(
-                imageVector = Icons.Default.Settings, // Placeholder, will use a better icon
-                contentDescription = "Metronome",
-                tint = AppColors.TextSecondary,
-                modifier = Modifier.size(24.dp)
+        // Secondary actions row (Metronome & History)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Metronome button
+            TextButton(
+                onClick = onMetronomeClick,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            ) {
+                Text(
+                    text = "Metronom",
+                    fontSize = 13.sp,
+                    color = AppColors.TextSecondary,
+                    fontFamily = InterFont
+                )
+            }
+            
+            Text(
+                text = "•",
+                color = AppColors.Separator,
+                fontSize = 13.sp
             )
+            
+            // History button
+            TextButton(
+                onClick = onHistoryClick,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            ) {
+                Text(
+                    text = "Geçmiş",
+                    fontSize = 13.sp,
+                    color = AppColors.TextSecondary,
+                    fontFamily = InterFont
+                )
+            }
         }
     }
 }

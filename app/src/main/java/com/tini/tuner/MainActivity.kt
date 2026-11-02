@@ -28,13 +28,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 enum class Screen {
     Tuner,
-    Metronome
+    Metronome,
+    History
 }
 
 class MainActivity : ComponentActivity() {
     
     private var hasAudioPermission by mutableStateOf(false)
     private var viewModel: TunerViewModel? = null
+    private lateinit var historyRepository: TuningHistoryRepository
     
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -50,6 +52,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        
+        historyRepository = TuningHistoryRepository(applicationContext)
         
         hasAudioPermission = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == 
                 android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -69,6 +73,12 @@ class MainActivity : ComponentActivity() {
                             if (hasAudioPermission) {
                                 val vm: TunerViewModel = viewModel()
                                 viewModel = vm
+                                
+                                // Set history repository in ViewModel
+                                LaunchedEffect(Unit) {
+                                    vm.setHistoryRepository(historyRepository)
+                                }
+                                
                                 val uiState by vm.uiState.collectAsState()
                                 
                                 TunerScreen(
@@ -79,7 +89,8 @@ class MainActivity : ComponentActivity() {
                                     onAutoModeToggle = { vm.setAutoMode(it) },
                                     onTuningChanged = { vm.setTuning(it) },
                                     onA4ReferenceChanged = { vm.setA4Reference(it) },
-                                    onMetronomeClick = { currentScreen = Screen.Metronome }
+                                    onMetronomeClick = { currentScreen = Screen.Metronome },
+                                    onHistoryClick = { currentScreen = Screen.History }
                                 )
                             } else {
                                 ProfessionalPermissionScreen(
@@ -92,6 +103,12 @@ class MainActivity : ComponentActivity() {
                         Screen.Metronome -> {
                             MetronomeScreen(
                                 onBackClick = { currentScreen = Screen.Tuner }
+                            )
+                        }
+                        Screen.History -> {
+                            HistoryScreen(
+                                onBackClick = { currentScreen = Screen.Tuner },
+                                repository = historyRepository
                             )
                         }
                     }

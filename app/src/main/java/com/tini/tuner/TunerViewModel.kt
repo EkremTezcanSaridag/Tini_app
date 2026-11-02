@@ -25,10 +25,16 @@ class TunerViewModel : ViewModel() {
     
     private val audioCapture = AudioCapture()
     private var captureJob: Job? = null
+    private var historyRepository: TuningHistoryRepository? = null
+    private var lastInTuneTime: Long = 0
     
     // Pitch smoothing with EMA (Exponential Moving Average)
     private var smoothedFrequency: Float? = null
     private val smoothingFactor = 0.3f // Lower = smoother but slower response
+    
+    fun setHistoryRepository(repository: TuningHistoryRepository) {
+        historyRepository = repository
+    }
     
     fun startListening() {
         if (_uiState.value.isListening) return
@@ -85,10 +91,47 @@ class TunerViewModel : ViewModel() {
             currentState.a4Reference
         )
         
+        // Save to history when in-tune (max once every 3 seconds)
+        if (tuningState.isInTune && historyRepository != null) {
+            val now = System.currentTimeMillis()
+            if (now - lastInTuneTime > 3000) {
+                lastInTuneTime = now
+                val stringNames = getStringNamesForTuning(currentState.currentTuning)
+                viewModelScope.launch {
+                    historyRepository?.addEntry(
+                        TuningHistoryEntry(
+                            timestamp = now,
+                            tuningType = currentState.currentTuning.displayName,
+                            stringNumber = currentState.selectedStringIndex + 1,
+                            stringName = stringNames[currentState.selectedStringIndex],
+                            targetFrequency = targetFrequency,
+                            actualFrequency = frequency,
+                            cents = tuningState.cents,
+                            wasInTune = true
+                        )
+                    )
+                }
+            }
+        }
+        
         _uiState.value = _uiState.value.copy(
             tuningState = tuningState,
             detectedFrequency = frequency
         )
+    }
+    
+    private fun getStringNamesForTuning(tuning: TuningType): List<String> {
+        return when (tuning) {
+            TuningType.STANDARD -> listOf("E", "A", "D", "G", "B", "E")
+            TuningType.DROP_D -> listOf("D", "A", "D", "G", "B", "E")
+            TuningType.DROP_C -> listOf("C", "G", "C", "F", "A", "D")
+            TuningType.HALF_STEP_DOWN -> listOf("Eb", "Ab", "Db", "Gb", "Bb", "Eb")
+            TuningType.DROP_Db -> listOf("Db", "Ab", "Db", "Gb", "Bb", "Eb")
+            TuningType.OPEN_G -> listOf("D", "G", "D", "G", "B", "D")
+            TuningType.OPEN_D -> listOf("D", "A", "D", "F#", "A", "D")
+            TuningType.DADGAD -> listOf("D", "A", "D", "G", "A", "D")
+            TuningType.DOUBLE_DROP_D -> listOf("D", "A", "D", "G", "B", "D")
+        }
     }
     
     fun selectString(index: Int) {
