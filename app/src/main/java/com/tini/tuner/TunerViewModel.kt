@@ -12,6 +12,7 @@ data class TunerUiState(
     val isListening: Boolean = false,
     val selectedStringIndex: Int = 0,
     val autoMode: Boolean = true,
+    val currentInstrument: Instrument = Instrument.GUITAR,
     val currentTuning: TuningType = TuningType.STANDARD,
     val a4Reference: Float = 440f,
     val tuningState: TuningState? = null,
@@ -131,6 +132,11 @@ class TunerViewModel : ViewModel() {
             TuningType.OPEN_D -> listOf("D", "A", "D", "F#", "A", "D")
             TuningType.DADGAD -> listOf("D", "A", "D", "G", "A", "D")
             TuningType.DOUBLE_DROP_D -> listOf("D", "A", "D", "G", "B", "D")
+            TuningType.BASS_STANDARD -> listOf("E", "A", "D", "G")
+            TuningType.BASS_DROP_D -> listOf("D", "A", "D", "G")
+            TuningType.BASS_5STRING -> listOf("B", "E", "A", "D", "G")
+            TuningType.UKULELE_C -> listOf("G", "C", "E", "A")
+            TuningType.UKULELE_D -> listOf("A", "D", "F#", "B")
         }
     }
     
@@ -148,6 +154,17 @@ class TunerViewModel : ViewModel() {
     fun setTuning(tuning: TuningType) {
         _uiState.value = _uiState.value.copy(
             currentTuning = tuning,
+            currentInstrument = tuning.instrument,
+            selectedStringIndex = 0
+        )
+    }
+    
+    fun setInstrument(instrument: Instrument) {
+        // Find first tuning for this instrument
+        val firstTuning = TuningType.values().first { it.instrument == instrument }
+        _uiState.value = _uiState.value.copy(
+            currentInstrument = instrument,
+            currentTuning = firstTuning,
             selectedStringIndex = 0
         )
     }

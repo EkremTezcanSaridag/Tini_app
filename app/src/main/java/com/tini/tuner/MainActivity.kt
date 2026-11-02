@@ -102,6 +102,7 @@ class MainActivity : ComponentActivity() {
                                     onStringSelected = { vm.selectString(it) },
                                     onAutoModeToggle = { vm.setAutoMode(it) },
                                     onTuningChanged = { vm.setTuning(it) },
+                                    onInstrumentChanged = { vm.setInstrument(it) },
                                     onA4ReferenceChanged = { vm.setA4Reference(it) },
                                     onMetronomeClick = { currentScreen = Screen.Metronome },
                                     onHistoryClick = { currentScreen = Screen.History },

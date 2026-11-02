@@ -10,16 +10,32 @@ data class GuitarString(
     val targetFrequency: Float
 )
 
-enum class TuningType(val displayName: String, val frequencies: List<Float>) {
-    STANDARD("Standart", listOf(82.41f, 110.00f, 146.83f, 196.00f, 246.94f, 329.63f)), // E A D G B E
-    DROP_D("Drop D", listOf(73.42f, 110.00f, 146.83f, 196.00f, 246.94f, 329.63f)), // D A D G B E
-    DROP_C("Drop C", listOf(65.41f, 98.00f, 130.81f, 174.61f, 220.00f, 293.66f)), // C G C F A D
-    HALF_STEP_DOWN("Yarım ton pes (Eb)", listOf(77.78f, 103.83f, 138.59f, 185.00f, 233.08f, 311.13f)), // Eb Ab Db Gb Bb Eb
-    DROP_Db("Drop Db", listOf(69.30f, 103.83f, 138.59f, 185.00f, 233.08f, 311.13f)), // Db Ab Db Gb Bb Eb
-    OPEN_G("Open G", listOf(73.42f, 98.00f, 146.83f, 196.00f, 246.94f, 293.66f)), // D G D G B D
-    OPEN_D("Open D", listOf(73.42f, 110.00f, 146.83f, 185.00f, 220.00f, 293.66f)), // D A D F# A D
-    DADGAD("DADGAD", listOf(73.42f, 110.00f, 146.83f, 196.00f, 220.00f, 293.66f)), // D A D G A D
-    DOUBLE_DROP_D("Double Drop D", listOf(73.42f, 110.00f, 146.83f, 196.00f, 246.94f, 293.66f)) // D A D G B D
+enum class Instrument(val displayName: String) {
+    GUITAR("Gitar"),
+    BASS("Bas Gitar"),
+    UKULELE("Ukulele")
+}
+
+enum class TuningType(val displayName: String, val frequencies: List<Float>, val instrument: Instrument = Instrument.GUITAR) {
+    // Guitar tunings
+    STANDARD("Standart", listOf(82.41f, 110.00f, 146.83f, 196.00f, 246.94f, 329.63f), Instrument.GUITAR), // E A D G B E
+    DROP_D("Drop D", listOf(73.42f, 110.00f, 146.83f, 196.00f, 246.94f, 329.63f), Instrument.GUITAR), // D A D G B E
+    DROP_C("Drop C", listOf(65.41f, 98.00f, 130.81f, 174.61f, 220.00f, 293.66f), Instrument.GUITAR), // C G C F A D
+    HALF_STEP_DOWN("Yarım ton pes (Eb)", listOf(77.78f, 103.83f, 138.59f, 185.00f, 233.08f, 311.13f), Instrument.GUITAR), // Eb Ab Db Gb Bb Eb
+    DROP_Db("Drop Db", listOf(69.30f, 103.83f, 138.59f, 185.00f, 233.08f, 311.13f), Instrument.GUITAR), // Db Ab Db Gb Bb Eb
+    OPEN_G("Open G", listOf(73.42f, 98.00f, 146.83f, 196.00f, 246.94f, 293.66f), Instrument.GUITAR), // D G D G B D
+    OPEN_D("Open D", listOf(73.42f, 110.00f, 146.83f, 185.00f, 220.00f, 293.66f), Instrument.GUITAR), // D A D F# A D
+    DADGAD("DADGAD", listOf(73.42f, 110.00f, 146.83f, 196.00f, 220.00f, 293.66f), Instrument.GUITAR), // D A D G A D
+    DOUBLE_DROP_D("Double Drop D", listOf(73.42f, 110.00f, 146.83f, 196.00f, 246.94f, 293.66f), Instrument.GUITAR), // D A D G B D
+    
+    // Bass guitar tunings (4-string)
+    BASS_STANDARD("Bas Standart", listOf(41.20f, 55.00f, 73.42f, 98.00f), Instrument.BASS), // E A D G
+    BASS_DROP_D("Bas Drop D", listOf(36.71f, 55.00f, 73.42f, 98.00f), Instrument.BASS), // D A D G
+    BASS_5STRING("Bas 5 Tel", listOf(30.87f, 41.20f, 55.00f, 73.42f, 98.00f), Instrument.BASS), // B E A D G
+    
+    // Ukulele tunings
+    UKULELE_C("Ukulele C (GCEA)", listOf(392.00f, 261.63f, 329.63f, 440.00f), Instrument.UKULELE), // G C E A
+    UKULELE_D("Ukulele D (ADF#B)", listOf(440.00f, 293.66f, 369.99f, 493.88f), Instrument.UKULELE) // A D F# B
 }
 
 data class TuningState(

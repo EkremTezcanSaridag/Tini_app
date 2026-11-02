@@ -42,6 +42,7 @@ fun TunerScreen(
     onStringSelected: (Int) -> Unit,
     onAutoModeToggle: (Boolean) -> Unit,
     onTuningChanged: (TuningType) -> Unit,
+    onInstrumentChanged: (Instrument) -> Unit = {},
     onA4ReferenceChanged: (Float) -> Unit,
     onMetronomeClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
@@ -513,7 +514,7 @@ fun MinimalStringSelector(
         modifier = Modifier.fillMaxWidth()
     ) {
         val availableWidth = maxWidth - 40.dp // Account for horizontal padding
-        val buttonSize = minOf(48.dp, availableWidth / 7) // 6 buttons + spacing
+        val buttonSize = minOf(48.dp, availableWidth / (strings.size + 1))
         
         Row(
             modifier = Modifier
@@ -523,7 +524,7 @@ fun MinimalStringSelector(
         ) {
             strings.forEachIndexed { index, name ->
                 MinimalStringButton(
-                    number = 6 - index,
+                    number = strings.size - index,
                     note = name,
                     isSelected = index == selectedIndex,
                     isTuned = index == selectedIndex && isTuned,
@@ -659,21 +660,57 @@ fun MinimalTuningSheet(
     currentTuning: TuningType,
     onTuningSelected: (TuningType) -> Unit
 ) {
+    var selectedInstrument by remember { mutableStateOf(currentTuning.instrument) }
+    val colors = AppColors
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(24.dp)
     ) {
         Text(
-            text = "Akort Türü",
+            text = "Enstrüman & Akort",
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
-            color = AppColors.TextPrimary,
+            color = colors.TextPrimary,
             fontFamily = InterFont,
             modifier = Modifier.padding(bottom = 20.dp)
         )
         
-        TuningType.values().forEach { tuning ->
+        // Instrument selector
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.SurfaceSecondary)
+                .padding(2.dp)
+        ) {
+            Instrument.values().forEach { instrument ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (selectedInstrument == instrument) colors.Surface else Color.Transparent)
+                        .clickable { selectedInstrument = instrument }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = instrument.displayName,
+                        fontSize = 13.sp,
+                        fontWeight = if (selectedInstrument == instrument) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (selectedInstrument == instrument) colors.TextPrimary else colors.TextSecondary,
+                        fontFamily = InterFont
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // Tunings for selected instrument
+        val tunings = TuningType.values().filter { it.instrument == selectedInstrument }
+        tunings.forEach { tuning ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -687,7 +724,7 @@ fun MinimalTuningSheet(
                     text = tuning.displayName,
                     fontSize = 17.sp,
                     fontWeight = if (tuning == currentTuning) FontWeight.SemiBold else FontWeight.Normal,
-                    color = AppColors.TextPrimary,
+                    color = colors.TextPrimary,
                     fontFamily = InterFont
                 )
                 
@@ -695,15 +732,15 @@ fun MinimalTuningSheet(
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
-                        tint = AppColors.AccentBlue,
+                        tint = colors.AccentBlue,
                         modifier = Modifier.size(22.dp)
                     )
                 }
             }
             
-            if (tuning != TuningType.values().last()) {
+            if (tuning != tunings.last()) {
                 Divider(
-                    color = AppColors.Separator,
+                    color = colors.Separator,
                     thickness = 0.5.dp,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
@@ -871,5 +908,10 @@ private fun getStringNames(tuning: TuningType): List<String> {
         TuningType.OPEN_D -> listOf("D", "A", "D", "F#", "A", "D")
         TuningType.DADGAD -> listOf("D", "A", "D", "G", "A", "D")
         TuningType.DOUBLE_DROP_D -> listOf("D", "A", "D", "G", "B", "D")
+        TuningType.BASS_STANDARD -> listOf("E", "A", "D", "G")
+        TuningType.BASS_DROP_D -> listOf("D", "A", "D", "G")
+        TuningType.BASS_5STRING -> listOf("B", "E", "A", "D", "G")
+        TuningType.UKULELE_C -> listOf("G", "C", "E", "A")
+        TuningType.UKULELE_D -> listOf("A", "D", "F#", "B")
     }
 }
