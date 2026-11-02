@@ -100,7 +100,7 @@ fun TunerScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             // String selector
             ProfessionalStringSelector(
@@ -369,7 +369,7 @@ fun ProfessionalGauge(
                     }
                     
                     val rad = Math.toRadians(segmentAngle.toDouble())
-                    val innerR = radius - 35f
+                    val innerR = radius - 50f
                     val outerR = radius
                     
                     val x1 = centerX + innerR * cos(rad).toFloat()
@@ -378,10 +378,10 @@ fun ProfessionalGauge(
                     val y2 = centerY + outerR * sin(rad).toFloat()
                     
                     drawLine(
-                        color = segmentColor.copy(alpha = 0.3f),
+                        color = segmentColor.copy(alpha = 0.35f),
                         start = Offset(x1, y1),
                         end = Offset(x2, y2),
-                        strokeWidth = 6f
+                        strokeWidth = 10f
                     )
                 }
                 
@@ -524,9 +524,9 @@ fun ProfessionalGauge(
                         text = statusText,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = statusColor,  // Direct color, not alpha - always visible
+                        color = statusColor,
                         fontFamily = ManropeFont,
-                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 10.dp)
+                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 14.dp)
                     )
                 }
             } else {
@@ -567,7 +567,7 @@ fun ProfessionalStringSelector(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
         ) {
             strings.forEachIndexed { index, name ->
                 StringButton(
@@ -613,7 +613,7 @@ fun StringButton(
         Surface(
             onClick = onClick,
             modifier = Modifier
-                .size(52.dp)
+                .size(48.dp)
                 .scale(scale),
             shape = CircleShape,
             color = if (isSelected) {
@@ -667,14 +667,16 @@ fun ProfessionalButton(
             .height(56.dp),
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isListening) AppColors.AccentRed else AppColors.PrimaryIndigo
+            containerColor = if (isListening) AppColors.AccentRed else AppColors.PrimaryIndigo,
+            contentColor = Color.White
         )
     ) {
         Text(
             text = text,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
-            fontFamily = ManropeFont
+            fontFamily = ManropeFont,
+            color = Color.White
         )
     }
 }
