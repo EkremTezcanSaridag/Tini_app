@@ -117,14 +117,16 @@ fun TunerScreen(
                 )
             }
 
-            HeadstockStringPicker(
+            Spacer(modifier = Modifier.weight(1f))
+
+            HorizontalNeckStringSelector(
                 strings = getStringNames(uiState.currentTuning),
                 selectedIndex = uiState.selectedStringIndex,
                 isTuned = uiState.tuningState?.isInTune == true,
                 onStringSelected = onStringSelected
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

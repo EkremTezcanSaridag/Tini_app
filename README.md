@@ -259,8 +259,13 @@ Tini_app/
 - [x] Ses/akort profili kaydetme ve paylaşma (JSON)
 - [x] Bas gitar ve ukulele desteği
 
-### v3.6 ✅ (Mevcut Sürüm)
-- [x] Mockup D: burgu illüstrasyonu + 2×3 dairesel tel örnekleri (bitmap), yatay tel listesi kaldırıldı
+### v3.7 ✅ (Mevcut Sürüm)
+- [x] Mockup D geri alındı: burgu fotoğrafı ve dairesel tel bitmap’leri kaldırıldı
+- [x] v3.5 yatay tel seçici (rozet + ince champagne teller) geri geldi
+- [x] Üstte analog kadran korundu (başlık çakışması düzeltmesi ile)
+
+### v3.6 ✅
+- [x] Mockup D: burgu illüstrasyonu + 2×3 dairesel tel örnekleri (bitmap) — **v3.7’de kaldırıldı**
 
 ### v3.5 ✅
 - [x] İnce champagne tel telleri (2.5–6.5dp), merkez highlight, ince sargı çizgileri; her satırda rozet
@@ -333,7 +338,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.6  
+**Versiyon:** 3.7  
 **Son Güncelleme:** 5 Kasım 2026
 
 </div>
