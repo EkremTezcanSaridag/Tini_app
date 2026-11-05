@@ -119,10 +119,9 @@ fun TunerScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            HorizontalNeckStringSelector(
+            CircularNoteStringPicker(
                 strings = getStringNames(uiState.currentTuning),
                 selectedIndex = uiState.selectedStringIndex,
-                isTuned = uiState.tuningState?.isInTune == true,
                 onStringSelected = onStringSelected
             )
 
@@ -389,6 +388,75 @@ fun HorizontalCentRuler(
         )
     }
 }
+
+@Composable
+fun CircularNoteStringPicker(
+    strings: List<String>,
+    selectedIndex: Int,
+    onStringSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = AppColors
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        val buttonSize = minOf(52.dp, (maxWidth - 8.dp) / strings.size.coerceAtLeast(1))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.Top
+        ) {
+            strings.forEachIndexed { dataIndex, note ->
+                val selected = dataIndex == selectedIndex
+                val stringNumber = strings.size - dataIndex
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.clickable { onStringSelected(dataIndex) }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(buttonSize)
+                            .clip(CircleShape)
+                            .background(
+                                if (selected) colors.TextPrimary
+                                else colors.Surface
+                            )
+                            .border(
+                                width = if (selected) 0.dp else 1.dp,
+                                color = colors.TextPrimary.copy(alpha = 0.35f),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = badgeLetter(note),
+                            fontSize = if (note.length > 1) 14.sp else 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (selected) Color.White else colors.TextPrimary,
+                            fontFamily = InterFont,
+                            maxLines = 1
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = stringNumber.toString(),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.TextSecondary,
+                        fontFamily = InterFont,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun badgeLetter(note: String): String =
+    if (note.length <= 2) note else note.take(1)
 
 @Composable
 fun MinimalStringSelector(
