@@ -85,82 +85,62 @@ fun TunerScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top bar - simple and centered
             MinimalTopBar(
                 tuningName = uiState.currentTuning.displayName,
                 onTuningClick = { showTuningSheet = true },
-                onSettingsClick = { showSettingsSheet = true },
-                onMetronomeClick = onMetronomeClick,
-                onHistoryClick = onHistoryClick,
-                onChordsClick = onChordsClick,
-                onProfilesClick = onProfilesClick
+                onSettingsClick = { showSettingsSheet = true }
             )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Main tuner area
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                MinimalTunerDisplay(
+                SpectrumWashBackground(magnitudes = uiState.spectrumMagnitudes)
+                PremiumTunerDisplay(
                     tuningState = uiState.tuningState,
                     note = uiState.tuningState?.note,
                     frequency = uiState.detectedFrequency,
-                    cents = uiState.tuningState?.cents,
-                    isListening = uiState.isListening
+                    cents = uiState.tuningState?.cents
                 )
             }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            SpectrumVisualization(
-                magnitudes = uiState.spectrumMagnitudes,
-                peaks = uiState.detectedPeaks
-            )
-            
+
             if (uiState.polyphonicMode && uiState.multiStringMatches.isNotEmpty()) {
                 Text(
                     text = "Çoklu tel: " + uiState.multiStringMatches.joinToString { (idx, freq) ->
                         val names = getStringNames(uiState.currentTuning)
                         "${names.getOrElse(idx) { "?" }} ${"%.0f".format(freq)}Hz"
                     },
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = AppColors.TextSecondary,
                     fontFamily = InterFont,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(bottom = 6.dp)
                 )
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // String selector
-            MinimalStringSelector(
+
+            GuitarStringSelector(
                 strings = getStringNames(uiState.currentTuning),
                 selectedIndex = uiState.selectedStringIndex,
                 isTuned = uiState.tuningState?.isInTune == true,
                 onStringSelected = onStringSelected
             )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // iOS-style segmented control for auto/manual
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             SegmentedControl(
                 isAuto = uiState.autoMode,
                 onModeChanged = onAutoModeToggle
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Minimal listening status
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
-                text = if (uiState.isListening) "Dinleniyor..." else "Durduruldu",
-                fontSize = 13.sp,
+                text = if (uiState.isListening) "Dinleniyor…" else "Durduruldu",
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = AppColors.TextSecondary,
                 fontFamily = InterFont,
@@ -168,9 +148,15 @@ fun TunerScreen(
                     if (uiState.isListening) onStopListening() else onStartListening()
                 }
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
         }
+
+        TiniBottomNavBar(
+            onMetronomeClick = onMetronomeClick,
+            onHistoryClick = onHistoryClick,
+            onChordsClick = onChordsClick,
+            onProfilesClick = onProfilesClick,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
     
     // Tuning selection bottom sheet
@@ -221,228 +207,153 @@ fun TunerScreen(
 fun MinimalTopBar(
     tuningName: String,
     onTuningClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-    onMetronomeClick: () -> Unit = {},
-    onHistoryClick: () -> Unit = {},
-    onChordsClick: () -> Unit = {},
-    onProfilesClick: () -> Unit = {}
+    onSettingsClick: () -> Unit
 ) {
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Settings icon on left
-            IconButton(onClick = onSettingsClick) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Ayarlar",
-                    tint = AppColors.TextSecondary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            
-            // Centered title and tuning selector
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "Tını",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = AppColors.TextSecondary,
-                    fontFamily = InterFont,
-                    letterSpacing = 0.5.sp
-                )
-                
-                // Tuning selector as plain text with chevron
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = onTuningClick)
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = tuningName,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = AppColors.TextPrimary,
-                        fontFamily = InterFont
-                    )
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = AppColors.TextSecondary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-            
-            // Empty space for balance
-            Spacer(modifier = Modifier.size(48.dp))
-        }
-        
-        // Secondary actions row (Metronome & History)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Metronome button
-            TextButton(
-                onClick = onMetronomeClick,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            ) {
-                Text(
-                    text = "Metronom",
-                    fontSize = 13.sp,
-                    color = AppColors.TextSecondary,
-                    fontFamily = InterFont
-                )
-            }
-            
-            Text(
-                text = "•",
-                color = AppColors.Separator,
-                fontSize = 13.sp
+    val colors = AppColors
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onSettingsClick) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Ayarlar",
+                tint = colors.TextSecondary,
+                modifier = Modifier.size(24.dp)
             )
-            
-            // History button
-            TextButton(
-                onClick = onHistoryClick,
-                modifier = Modifier.padding(horizontal = 4.dp)
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = "Tını",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.TextSecondary,
+                fontFamily = InterFont,
+                letterSpacing = 0.5.sp
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onTuningClick)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = "Geçmiş",
-                    fontSize = 13.sp,
-                    color = AppColors.TextSecondary,
+                    text = tuningName,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.TextPrimary,
                     fontFamily = InterFont
                 )
-            }
-            
-            Text(text = "•", color = AppColors.Separator, fontSize = 13.sp)
-            
-            TextButton(onClick = onChordsClick, modifier = Modifier.padding(horizontal = 4.dp)) {
-                Text("Akorlar", fontSize = 13.sp, color = AppColors.TextSecondary, fontFamily = InterFont)
-            }
-            
-            Text(text = "•", color = AppColors.Separator, fontSize = 13.sp)
-            
-            TextButton(onClick = onProfilesClick, modifier = Modifier.padding(horizontal = 4.dp)) {
-                Text("Profil", fontSize = 13.sp, color = AppColors.TextSecondary, fontFamily = InterFont)
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = colors.TextSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
+
+        Spacer(modifier = Modifier.size(48.dp))
     }
 }
 
 @Composable
-fun MinimalTunerDisplay(
+fun PremiumTunerDisplay(
     tuningState: TuningState?,
     note: String?,
     frequency: Float?,
-    cents: Float?,
-    isListening: Boolean
+    cents: Float?
 ) {
-    val needlePosition by animateFloatAsState(
-        targetValue = (tuningState?.cents ?: 0f).coerceIn(-50f, 50f),
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "needle"
-    )
-    
+    val colors = AppColors
+    val needleCents = (tuningState?.cents ?: 0f).coerceIn(-50f, 50f)
     val inTuneScale by animateFloatAsState(
-        targetValue = if (tuningState?.isInTune == true) 1.05f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "scale"
+        targetValue = if (tuningState?.isInTune == true) 1.04f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "noteScale"
     )
-    
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 72.dp)
     ) {
-        // Huge thin note name - Apple style
         Text(
-            text = note ?: "--",
-            fontSize = 110.sp,
+            text = note ?: "—",
+            fontSize = 88.sp,
             fontWeight = FontWeight.Light,
-            color = AppColors.TextPrimary,
+            color = colors.TextPrimary,
             fontFamily = InterFont,
             letterSpacing = (-2).sp,
             modifier = Modifier.scale(inTuneScale)
         )
-        
-        // Frequency below
+
         if (frequency != null) {
             Text(
                 text = "%.1f Hz".format(frequency),
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
-                color = AppColors.TextSecondary,
+                color = colors.TextSecondary,
                 fontFamily = InterFont
             )
-        }
-        
-        // Horizontal cent ruler - minimal Apple style
-        if (tuningState != null) {
-            HorizontalCentRuler(
-                cents = needlePosition,
-                isInTune = tuningState.isInTune
-            )
-            
+        } else {
             Spacer(modifier = Modifier.height(4.dp))
-            
-            // Cents value
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        if (tuningState != null) {
+            ArcTunerGauge(
+                cents = needleCents,
+                isInTune = tuningState.isInTune,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
             val centsColor = when {
-                tuningState.isInTune -> AppColors.AccentGreen
-                cents != null && cents < 0 -> AppColors.AccentRed
-                else -> AppColors.AccentOrange
+                tuningState.isInTune -> colors.AccentGreen
+                cents != null && cents < 0 -> colors.AccentRed
+                else -> colors.AccentOrange
             }
-            
+
             Text(
                 text = if (cents != null) {
                     val sign = if (cents > 0) "+" else ""
-                    "$sign${cents.toInt()}"
-                } else "--",
-                fontSize = 24.sp,
+                    "$sign${cents.toInt()} ¢"
+                } else "—",
+                fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = centsColor,
-                fontFamily = InterFont
+                fontFamily = InterFont,
+                modifier = Modifier.padding(top = 4.dp)
             )
-            
-            // Status text - clear and visible
+
             val statusText = when (tuningState.direction) {
-                TuningDirection.TOO_LOW -> "Teli sık"
-                TuningDirection.TOO_HIGH -> "Teli gevşet"
+                TuningDirection.TOO_LOW -> "Pes"
+                TuningDirection.TOO_HIGH -> "Tiz"
                 TuningDirection.IN_TUNE -> "Akortlu"
             }
-            
+
             Text(
                 text = statusText,
-                fontSize = 16.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = centsColor,
                 fontFamily = InterFont
             )
         } else {
-            Spacer(modifier = Modifier.height(80.dp))
-            // Placeholder
+            Spacer(modifier = Modifier.height(120.dp))
             Text(
-                text = "Teli çal",
-                fontSize = 17.sp,
+                text = "Teli çalın",
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = AppColors.TextSecondary,
+                color = colors.TextSecondary,
                 fontFamily = InterFont
             )
         }

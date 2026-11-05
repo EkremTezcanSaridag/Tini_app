@@ -32,22 +32,9 @@ fun ChordLibraryScreen(onBackClick: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(colors.Background)
-            .padding(24.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.Default.ArrowBack, "Geri", tint = colors.TextPrimary)
-            }
-            Text(
-                "Akor Kütüphanesi",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.TextPrimary,
-                fontFamily = InterFont
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
+        TiniSubScreenTopBar(title = "Akor Kütüphanesi", onBackClick = onBackClick)
 
         Card(
             modifier = Modifier.fillMaxWidth(),

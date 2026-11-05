@@ -42,31 +42,18 @@ fun ProfilesScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.Background)
-            .padding(24.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBackClick) {
-                    Icon(Icons.Default.ArrowBack, "Geri", tint = colors.TextPrimary)
-                }
-                Text(
-                    "Profiller",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.TextPrimary,
-                    fontFamily = InterFont
-                )
-            }
+            TiniSubScreenTopBar(title = "Profiller", onBackClick = onBackClick, modifier = Modifier.weight(1f))
             TextButton(onClick = { showSaveDialog = true }) {
                 Text("Kaydet", color = colors.AccentBlue, fontFamily = InterFont)
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         if (profiles.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

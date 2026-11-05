@@ -63,30 +63,9 @@ fun MetronomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.Background)
-            .padding(24.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Geri",
-                    tint = colors.TextPrimary
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Metronom",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.TextPrimary,
-                fontFamily = InterFont
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(48.dp))
+        TiniSubScreenTopBar(title = "Metronom", onBackClick = onBackClick)
         
         Column(
             modifier = Modifier.fillMaxWidth(),

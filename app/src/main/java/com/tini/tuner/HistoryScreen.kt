@@ -33,44 +33,21 @@ fun HistoryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(AppColors.Background)
-            .padding(24.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        // Top bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Geri",
-                        tint = AppColors.TextPrimary
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Akort Geçmişi",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = AppColors.TextPrimary,
-                    fontFamily = InterFont
-                )
-            }
-            
+            TiniSubScreenTopBar(title = "Akort Geçmişi", onBackClick = onBackClick, modifier = Modifier.weight(1f))
             if (history.isNotEmpty()) {
                 IconButton(onClick = { showClearDialog = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Temizle",
-                        tint = AppColors.AccentRed
-                    )
+                    Icon(Icons.Default.Delete, "Temizle", tint = AppColors.AccentRed)
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
         if (history.isEmpty()) {
             Box(

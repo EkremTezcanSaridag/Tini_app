@@ -33,12 +33,14 @@
   <tr>
     <td><img src="docs/screenshots/metronome.png" width="220" alt="Metronom"/></td>
     <td><img src="docs/screenshots/chords.png" width="220" alt="Akorlar"/></td>
-    <td colspan="2"></td>
+    <td><img src="docs/screenshots/tuner_strings.png" width="220" alt="Tel seçici"/></td>
+    <td></td>
   </tr>
   <tr>
     <td align="center"><b>Metronom</b></td>
     <td align="center"><b>Akor Kütüphanesi</b></td>
-    <td colspan="2"></td>
+    <td align="center"><b>Yaylı kadran + tel seçici</b></td>
+    <td></td>
   </tr>
 </table>
 
@@ -251,11 +253,17 @@ Tini_app/
 - [x] Widget desteği
 - [x] Akor kütüphanesi (~30 akor)
 
-### v3.0 ✅ (Mevcut Sürüm)
+### v3.0 ✅
 - [x] FFT çok-tepe / çoklu tel analizi
 - [x] Spektrum görselleştirme
 - [x] Ses/akort profili kaydetme ve paylaşma (JSON)
 - [x] Bas gitar ve ukulele desteği
+
+### v3.1 ✅ (Mevcut Sürüm)
+- [x] Yaylı analog kadran (−50…+50 cent, renkli bölgeler, iğne + halo)
+- [x] Tel seçici (kalınlık + Kalın E / İnce E etiketleri)
+- [x] Hafif spektrum yıkaması, alt ikon navigasyonu
+- [x] Metronom / geçmiş / akorlar / profil ekranlarında ortak üst çubuk
 
 ### Gelecek 💭
 - [ ] Daha zengin akor kütüphanesi ve arama
@@ -306,7 +314,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.0.1  
-**Son Güncelleme:** 2 Kasım 2026
+**Versiyon:** 3.1  
+**Son Güncelleme:** 5 Kasım 2026
 
 </div>
