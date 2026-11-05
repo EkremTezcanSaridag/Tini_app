@@ -34,10 +34,12 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.cos
-import kotlin.math.hypot
 import kotlin.math.sin
 
 enum class TiniNavTab { Metronome, History, Chords, Profiles }
@@ -267,6 +269,18 @@ fun SpectrumWashBackground(
     }
 }
 
+private val StringHighlight = Color(0xFFF2E4B0)
+private val StringShadow = Color(0xFF3D2E14)
+
+/** Diameter presets (dp) for rank 0 = thinnest (high string) … rank 5 = thickest (low E). */
+private fun stringDiameterDp(rankFromThin: Int, stringCount: Int): Dp {
+    val presets = listOf(3.5f, 4.5f, 6f, 8f, 10f, 13f)
+    if (stringCount <= 1) return presets.first().dp
+    val idx = (rankFromThin.toFloat() / (stringCount - 1) * (presets.lastIndex)).toInt()
+        .coerceIn(0, presets.lastIndex)
+    return presets[idx].dp
+}
+
 /**
  * Horizontal neck — top→bottom: İnce E (high) … Kalın E (low). Data index 0 = lowest.
  */
@@ -280,12 +294,16 @@ fun HorizontalNeckStringSelector(
 ) {
     val colors = AppColors
     val dataIndicesTopToBottom = strings.indices.reversed().toList()
-    val thicknessPxSteps = listOf(1.4f, 2.0f, 2.8f, 3.6f, 4.6f, 5.8f)
+    val rowHeights = dataIndicesTopToBottom.map { dataIndex ->
+        val rank = strings.size - 1 - dataIndex
+        stringDiameterDp(rank, strings.size) + 14.dp
+    }
+    val totalHeight = rowHeights.fold(0.dp) { acc, h -> acc + h }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height((strings.size * 32 + 12).dp)
+            .height(totalHeight.coerceAtLeast(200.dp))
             .padding(horizontal = 2.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -301,22 +319,20 @@ fun HorizontalNeckStringSelector(
                     )
                 }
             }
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                dataIndicesTopToBottom.forEach { dataIndex ->
+            Column(modifier = Modifier.fillMaxSize()) {
+                dataIndicesTopToBottom.forEachIndexed { rowIndex, dataIndex ->
                     val note = strings[dataIndex]
                     val selected = dataIndex == selectedIndex
                     val tuned = selected && isTuned
                     val caption = neckCaption(note, dataIndex, strings.size)
                     val rankFromThin = strings.size - 1 - dataIndex
-                    val strokePx = thicknessPxSteps.getOrElse(rankFromThin) { 2.5f }
+                    val diameterDp = stringDiameterDp(rankFromThin, strings.size)
                     val wound = rankFromThin >= 2
 
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(rowHeights[rowIndex])
                             .clickable { onStringSelected(dataIndex) }
                     ) {
                         if (caption != null) {
@@ -334,7 +350,7 @@ fun HorizontalNeckStringSelector(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(26.dp),
+                                .weight(1f),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             StringNoteBadge(
@@ -348,13 +364,11 @@ fun HorizontalNeckStringSelector(
                                     .weight(1f)
                                     .fillMaxHeight()
                             ) {
-                                val y = size.height / 2f
-                                val startX = 0f
-                                val endX = size.width
-                                drawMetallicGuitarString(
-                                    start = Offset(startX, y),
-                                    end = Offset(endX, y),
-                                    strokeWidth = strokePx,
+                                drawGuitarStringRod(
+                                    left = 0f,
+                                    right = size.width,
+                                    centerY = size.height / 2f,
+                                    diameterPx = diameterDp.toPx(),
                                     wound = wound,
                                     selected = selected,
                                     tuned = tuned,
@@ -424,90 +438,127 @@ private fun neckCaption(note: String, dataIndex: Int, total: Int): String? {
     }
 }
 
-private fun DrawScope.drawMetallicGuitarString(
-    start: Offset,
-    end: Offset,
-    strokeWidth: Float,
+private fun DrawScope.drawGuitarStringRod(
+    left: Float,
+    right: Float,
+    centerY: Float,
+    diameterPx: Float,
     wound: Boolean,
     selected: Boolean,
     tuned: Boolean,
     green: Color
 ) {
-    val length = hypot(end.x - start.x, end.y - start.y)
+    val h = diameterPx.coerceAtLeast(4f)
+    val top = centerY - h / 2f
+    val width = (right - left).coerceAtLeast(1f)
+    val corner = CornerRadius(h / 2f, h / 2f)
+    val rodLeft = left
+    val rodTop = top
+    val rodSize = Size(width, h)
+
     if (selected) {
-        val glowH = strokeWidth + 18f
+        val glowPad = h * 0.55f
         drawRoundRect(
-            color = green.copy(alpha = if (tuned) 0.28f else 0.18f),
-            topLeft = Offset(start.x, start.y - glowH / 2),
-            size = Size(length, glowH),
-            cornerRadius = CornerRadius(glowH / 2)
+            color = green.copy(alpha = if (tuned) 0.38f else 0.24f),
+            topLeft = Offset(rodLeft - 3f, rodTop - glowPad),
+            size = Size(width + 6f, h + glowPad * 2f),
+            cornerRadius = CornerRadius((h + glowPad * 2f) / 2f)
         )
     }
 
-    val bronzeBrush = Brush.horizontalGradient(
-        colors = listOf(
-            StringBronzeDark.copy(alpha = 0.85f),
-            StringBronze,
-            StringBronzeMid,
-            StringBronze,
-            StringBronzeDark.copy(alpha = 0.85f)
-        ),
-        startX = start.x,
-        endX = end.x
+    drawRoundRect(
+        color = StringShadow.copy(alpha = 0.4f),
+        topLeft = Offset(rodLeft + 1f, rodTop + h * 0.12f),
+        size = Size(width, h * 0.92f),
+        cornerRadius = corner
     )
 
-    drawLine(
-        brush = bronzeBrush,
-        start = start,
-        end = end,
-        strokeWidth = strokeWidth,
-        cap = StrokeCap.Round
+    drawRoundRect(
+        brush = Brush.verticalGradient(
+            colorStops = arrayOf(
+                0f to Color(0xFF4A3815),
+                0.18f to Color(0xFF8B6928),
+                0.42f to Color(0xFFE6CF7A),
+                0.5f to Color(0xFFF5E8A8),
+                0.58f to Color(0xFFE6CF7A),
+                0.82f to Color(0xFF8B6928),
+                1f to Color(0xFF4A3815)
+            ),
+            startY = rodTop,
+            endY = rodTop + h
+        ),
+        topLeft = Offset(rodLeft, rodTop),
+        size = rodSize,
+        cornerRadius = corner
+    )
+
+    drawRoundRect(
+        brush = Brush.horizontalGradient(
+            colors = listOf(
+                StringBronzeDark.copy(alpha = 0.45f),
+                Color.Transparent,
+                Color.Transparent,
+                StringBronzeDark.copy(alpha = 0.35f)
+            ),
+            startX = rodLeft,
+            endX = rodLeft + width
+        ),
+        topLeft = Offset(rodLeft, rodTop),
+        size = rodSize,
+        cornerRadius = corner
+    )
+
+    drawRoundRect(
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0f),
+                Color.White.copy(alpha = 0.55f),
+                Color.White.copy(alpha = 0f)
+            ),
+            startY = rodTop + h * 0.22f,
+            endY = rodTop + h * 0.78f
+        ),
+        topLeft = Offset(rodLeft + width * 0.06f, rodTop + h * 0.25f),
+        size = Size(width * 0.88f, h * 0.5f),
+        cornerRadius = CornerRadius(h * 0.25f)
     )
 
     if (wound) {
-        val coilSpacing = 5.5f
-        val steps = (length / coilSpacing).toInt().coerceAtLeast(1)
-        val dx = (end.x - start.x) / length
-        val dy = (end.y - start.y) / length
-        val px = -dy
-        val py = dx
-        for (i in 0 until steps) {
-            if (i % 2 == 0) continue
-            val t = (i + 0.5f) * coilSpacing
-            if (t > length) break
-            val cx = start.x + dx * t
-            val cy = start.y + dy * t
-            val markLen = strokeWidth * 1.1f
-            drawLine(
-                color = StringBronzeDark.copy(alpha = if (selected) 0.75f else 0.55f),
-                start = Offset(cx - px * markLen, cy - py * markLen),
-                end = Offset(cx + px * markLen, cy + py * markLen),
-                strokeWidth = 1.1f,
-                cap = StrokeCap.Round
+        val clip = Path().apply {
+            addRoundRect(
+                androidx.compose.ui.geometry.RoundRect(
+                    left = rodLeft,
+                    top = rodTop,
+                    right = rodLeft + width,
+                    bottom = rodTop + h,
+                    cornerRadius = corner
+                )
             )
         }
-        for (i in 0 until steps) {
-            if (i % 2 != 0) continue
-            val t = i * coilSpacing
-            if (t > length) break
-            val cx = start.x + dx * t
-            val cy = start.y + dy * t
-            drawLine(
-                color = Color.White.copy(alpha = if (selected) 0.35f else 0.22f),
-                start = Offset(cx, cy - strokeWidth * 0.35f),
-                end = Offset(cx, cy + strokeWidth * 0.35f),
-                strokeWidth = 0.8f,
-                cap = StrokeCap.Round
-            )
+        clipPath(clip) {
+            val pitch = (h * 0.28f).coerceIn(2.2f, 4.5f)
+            var x = rodLeft - pitch
+            var ridge = 0
+            while (x < rodLeft + width + pitch) {
+                val shade = if (ridge % 2 == 0) Color(0xFF2E220C) else Color(0xFF5C4520)
+                drawLine(
+                    color = shade.copy(alpha = 0.82f),
+                    start = Offset(x, rodTop + h * 0.04f),
+                    end = Offset(x + pitch * 1.15f, rodTop + h * 0.96f),
+                    strokeWidth = (h * 0.11f).coerceAtLeast(1.4f),
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    color = StringHighlight.copy(alpha = 0.42f),
+                    start = Offset(x + pitch * 0.42f, rodTop + h * 0.08f),
+                    end = Offset(x + pitch * 1.55f, rodTop + h * 0.92f),
+                    strokeWidth = (h * 0.06f).coerceAtLeast(0.9f),
+                    cap = StrokeCap.Round
+                )
+                x += pitch * 0.92f
+                ridge++
+            }
         }
-    } else {
-        drawLine(
-            color = Color.White.copy(alpha = 0.25f),
-            start = Offset(start.x, start.y - strokeWidth * 0.25f),
-            end = Offset(end.x, end.y - strokeWidth * 0.25f),
-            strokeWidth = 1f,
-            cap = StrokeCap.Round
-        )
     }
 }
 

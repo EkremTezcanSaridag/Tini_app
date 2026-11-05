@@ -259,7 +259,10 @@ Tini_app/
 - [x] Ses/akort profili kaydetme ve paylaşma (JSON)
 - [x] Bas gitar ve ukulele desteği
 
-### v3.3 ✅ (Mevcut Sürüm)
+### v3.4 ✅ (Mevcut Sürüm)
+- [x] Tel çizimi: dp kalınlığında 3D bronz silindirler, G–Kalın E sargı bobini
+
+### v3.3 ✅
 - [x] Mockup uyumu: yoğun kadran tick’leri, doygun kırmızı/yeşil track, koyu iğne
 - [x] Bronz/gold yatay teller, kalın tellerde sargı (helical) çizimi, rozetler
 
@@ -324,7 +327,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.3  
+**Versiyon:** 3.4  
 **Son Güncelleme:** 5 Kasım 2026
 
 </div>
