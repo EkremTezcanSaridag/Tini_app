@@ -77,14 +77,15 @@ fun TunerScreen(
         }
     }
     
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AppColors.Background)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -154,8 +155,7 @@ fun TunerScreen(
             onMetronomeClick = onMetronomeClick,
             onHistoryClick = onHistoryClick,
             onChordsClick = onChordsClick,
-            onProfilesClick = onProfilesClick,
-            modifier = Modifier.align(Alignment.BottomCenter)
+            onProfilesClick = onProfilesClick
         )
     }
     

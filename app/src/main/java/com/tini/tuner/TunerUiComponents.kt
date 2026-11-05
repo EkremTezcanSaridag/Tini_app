@@ -272,7 +272,9 @@ fun TiniBottomNavBar(
 ) {
     val colors = AppColors
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
         color = colors.Surface,
         shadowElevation = 8.dp,
         tonalElevation = 0.dp

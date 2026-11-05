@@ -259,7 +259,10 @@ Tini_app/
 - [x] Ses/akort profili kaydetme ve paylaşma (JSON)
 - [x] Bas gitar ve ukulele desteği
 
-### v3.1 ✅ (Mevcut Sürüm)
+### v3.1.1 ✅ (Mevcut Sürüm)
+- [x] Alt navigasyon ile akort kontrolleri çakışması düzeltildi (Otomatik/Manuel, Dinleniyor…)
+
+### v3.1 ✅
 - [x] Yaylı analog kadran (−50…+50 cent, renkli bölgeler, iğne + halo)
 - [x] Tel seçici (kalınlık + Kalın E / İnce E etiketleri)
 - [x] Hafif spektrum yıkaması, alt ikon navigasyonu
@@ -314,7 +317,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.1  
+**Versiyon:** 3.1.1  
 **Son Güncelleme:** 5 Kasım 2026
 
 </div>
