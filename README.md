@@ -39,7 +39,7 @@
   <tr>
     <td align="center"><b>Metronom</b></td>
     <td align="center"><b>Akor Kütüphanesi</b></td>
-    <td align="center"><b>Yaylı kadran + tel seçici</b></td>
+    <td align="center"><b>Yatay tel seçici (kadran)</b></td>
     <td></td>
   </tr>
 </table>
@@ -259,7 +259,10 @@ Tini_app/
 - [x] Ses/akort profili kaydetme ve paylaşma (JSON)
 - [x] Bas gitar ve ukulele desteği
 
-### v3.1.1 ✅ (Mevcut Sürüm)
+### v3.2 ✅ (Mevcut Sürüm)
+- [x] Onaylı mockup: tam daire analog kadran (içte nota/Hertz/durum), yatay tel seçici (İnce E → Kalın E)
+
+### v3.1.1 ✅
 - [x] Alt navigasyon ile akort kontrolleri çakışması düzeltildi (Otomatik/Manuel, Dinleniyor…)
 
 ### v3.1 ✅
@@ -317,7 +320,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.1.1  
+**Versiyon:** 3.2  
 **Son Güncelleme:** 5 Kasım 2026
 
 </div>

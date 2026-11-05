@@ -204,7 +204,7 @@ interface AppColorsScheme {
 }
 
 object AppColorsLight : AppColorsScheme {
-    override val Background = Color(0xFFFAFAFA)
+    override val Background = Color(0xFFF7F7F8)
     override val Surface = Color(0xFFFFFFFF)
     override val SurfaceSecondary = Color(0xFFF5F5F7)
     override val TextPrimary = Color(0xFF1D1D1F)

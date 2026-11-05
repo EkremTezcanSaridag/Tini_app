@@ -101,12 +101,10 @@ fun TunerScreen(
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                SpectrumWashBackground(magnitudes = uiState.spectrumMagnitudes)
                 PremiumTunerDisplay(
                     tuningState = uiState.tuningState,
                     note = uiState.tuningState?.note,
-                    frequency = uiState.detectedFrequency,
-                    cents = uiState.tuningState?.cents
+                    frequency = uiState.detectedFrequency
                 )
             }
 
@@ -123,39 +121,59 @@ fun TunerScreen(
                 )
             }
 
-            GuitarStringSelector(
+            HorizontalNeckStringSelector(
                 strings = getStringNames(uiState.currentTuning),
                 selectedIndex = uiState.selectedStringIndex,
                 isTuned = uiState.tuningState?.isInTune == true,
                 onStringSelected = onStringSelected
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            SegmentedControl(
-                isAuto = uiState.autoMode,
-                onModeChanged = onAutoModeToggle
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = if (uiState.isListening) "Dinleniyor…" else "Durduruldu",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = AppColors.TextSecondary,
-                fontFamily = InterFont,
-                modifier = Modifier.clickable {
-                    if (uiState.isListening) onStopListening() else onStartListening()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SegmentedControl(
+                    isAuto = uiState.autoMode,
+                    onModeChanged = onAutoModeToggle,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        if (uiState.isListening) onStopListening() else onStartListening()
+                    }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (uiState.isListening) AppColors.AccentGreen
+                                else AppColors.TextSecondary.copy(alpha = 0.5f)
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (uiState.isListening) "Dinleniyor…" else "Durduruldu",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = AppColors.TextSecondary,
+                        fontFamily = InterFont
+                    )
                 }
-            )
+            }
         }
 
         TiniBottomNavBar(
             onMetronomeClick = onMetronomeClick,
             onHistoryClick = onHistoryClick,
             onChordsClick = onChordsClick,
-            onProfilesClick = onProfilesClick
+            onProfilesClick = onProfilesClick,
+            selectedTab = null
         )
     }
     
@@ -268,96 +286,14 @@ fun MinimalTopBar(
 fun PremiumTunerDisplay(
     tuningState: TuningState?,
     note: String?,
-    frequency: Float?,
-    cents: Float?
+    frequency: Float?
 ) {
-    val colors = AppColors
-    val needleCents = (tuningState?.cents ?: 0f).coerceIn(-50f, 50f)
-    val inTuneScale by animateFloatAsState(
-        targetValue = if (tuningState?.isInTune == true) 1.04f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "noteScale"
+    CircularAnalogDial(
+        note = note,
+        frequency = frequency,
+        tuningState = tuningState,
+        modifier = Modifier.padding(horizontal = 4.dp)
     )
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 72.dp)
-    ) {
-        Text(
-            text = note ?: "—",
-            fontSize = 88.sp,
-            fontWeight = FontWeight.Light,
-            color = colors.TextPrimary,
-            fontFamily = InterFont,
-            letterSpacing = (-2).sp,
-            modifier = Modifier.scale(inTuneScale)
-        )
-
-        if (frequency != null) {
-            Text(
-                text = "%.1f Hz".format(frequency),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = colors.TextSecondary,
-                fontFamily = InterFont
-            )
-        } else {
-            Spacer(modifier = Modifier.height(4.dp))
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        if (tuningState != null) {
-            ArcTunerGauge(
-                cents = needleCents,
-                isInTune = tuningState.isInTune,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            val centsColor = when {
-                tuningState.isInTune -> colors.AccentGreen
-                cents != null && cents < 0 -> colors.AccentRed
-                else -> colors.AccentOrange
-            }
-
-            Text(
-                text = if (cents != null) {
-                    val sign = if (cents > 0) "+" else ""
-                    "$sign${cents.toInt()} ¢"
-                } else "—",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = centsColor,
-                fontFamily = InterFont,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            val statusText = when (tuningState.direction) {
-                TuningDirection.TOO_LOW -> "Pes"
-                TuningDirection.TOO_HIGH -> "Tiz"
-                TuningDirection.IN_TUNE -> "Akortlu"
-            }
-
-            Text(
-                text = statusText,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = centsColor,
-                fontFamily = InterFont
-            )
-        } else {
-            Spacer(modifier = Modifier.height(120.dp))
-            Text(
-                text = "Teli çalın",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = colors.TextSecondary,
-                fontFamily = InterFont
-            )
-        }
-    }
 }
 
 @Composable
@@ -557,11 +493,11 @@ fun MinimalStringButton(
 @Composable
 fun SegmentedControl(
     isAuto: Boolean,
-    onModeChanged: (Boolean) -> Unit
+    onModeChanged: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth(0.7f)
+        modifier = modifier
             .height(36.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(AppColors.SurfaceSecondary)
