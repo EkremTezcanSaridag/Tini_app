@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -82,7 +83,8 @@ fun CircularAnalogDial(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(1.02f),
+            .height(228.dp)
+            .clipToBounds(),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -181,7 +183,9 @@ fun CircularAnalogDial(
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 4.dp)
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(top = 8.dp)
         ) {
             if (tuningState != null) {
                 Text(
@@ -407,9 +411,7 @@ private fun StringSampleCircle(
             Image(
                 painter = painterResource(cell.imageRes),
                 contentDescription = cell.label,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(6.dp),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
         }

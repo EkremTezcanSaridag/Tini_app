@@ -95,18 +95,14 @@ fun TunerScreen(
                 onSettingsClick = { showSettingsSheet = true }
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.38f),
-                contentAlignment = Alignment.Center
-            ) {
-                PremiumTunerDisplay(
-                    tuningState = uiState.tuningState,
-                    note = uiState.tuningState?.note,
-                    frequency = uiState.detectedFrequency
-                )
-            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PremiumTunerDisplay(
+                tuningState = uiState.tuningState,
+                note = uiState.tuningState?.note,
+                frequency = uiState.detectedFrequency,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             if (uiState.polyphonicMode && uiState.multiStringMatches.isNotEmpty()) {
                 Text(
@@ -286,13 +282,14 @@ fun MinimalTopBar(
 fun PremiumTunerDisplay(
     tuningState: TuningState?,
     note: String?,
-    frequency: Float?
+    frequency: Float?,
+    modifier: Modifier = Modifier
 ) {
     CircularAnalogDial(
         note = note,
         frequency = frequency,
         tuningState = tuningState,
-        modifier = Modifier.padding(horizontal = 4.dp)
+        modifier = modifier.padding(horizontal = 4.dp)
     )
 }
 

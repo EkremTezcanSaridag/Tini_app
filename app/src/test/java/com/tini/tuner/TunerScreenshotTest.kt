@@ -64,7 +64,7 @@ class TunerScreenshotTest {
         }
         
         composeTestRule.waitForIdle()
-        composeTestRule.onRoot().captureRoboImage()
+        composeTestRule.onRoot().captureRoboImage("docs/screenshots/idle.png")
     }
 
     @Ignore("Screenshot test - run locally only")
@@ -100,7 +100,7 @@ class TunerScreenshotTest {
         }
         
         composeTestRule.waitForIdle()
-        composeTestRule.onRoot().captureRoboImage()
+        composeTestRule.onRoot().captureRoboImage("docs/screenshots/in_tune.png")
     }
 
     @Ignore("Screenshot test - run locally only")
@@ -136,7 +136,7 @@ class TunerScreenshotTest {
         }
         
         composeTestRule.waitForIdle()
-        composeTestRule.onRoot().captureRoboImage()
+        composeTestRule.onRoot().captureRoboImage("docs/screenshots/too_low.png")
     }
 
     @Ignore("Screenshot test - run locally only")
@@ -172,7 +172,7 @@ class TunerScreenshotTest {
         }
         
         composeTestRule.waitForIdle()
-        composeTestRule.onRoot().captureRoboImage()
+        composeTestRule.onRoot().captureRoboImage("docs/screenshots/too_high.png")
     }
 
     @Ignore("Screenshot test - run locally only")
@@ -208,7 +208,7 @@ class TunerScreenshotTest {
         }
         
         composeTestRule.waitForIdle()
-        composeTestRule.onRoot().captureRoboImage()
+        composeTestRule.onRoot().captureRoboImage("docs/screenshots/tuner_strings.png")
     }
 
     @Ignore("Screenshot test - run locally only")

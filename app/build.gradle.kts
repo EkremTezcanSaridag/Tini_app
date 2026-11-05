@@ -13,8 +13,8 @@ android {
         applicationId = "com.tini.tuner"
         minSdk = 24
         targetSdk = 34
-        versionCode = 12
-        versionName = "3.6"
+        versionCode = 13
+        versionName = "3.6.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -75,6 +75,10 @@ android {
             }
         }
     }
+}
+
+roborazzi {
+    outputDir.set(rootProject.layout.projectDirectory.dir("docs/screenshots"))
 }
 
 dependencies {
