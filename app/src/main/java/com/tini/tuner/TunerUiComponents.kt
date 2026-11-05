@@ -3,12 +3,17 @@ package com.tini.tuner
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,11 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
@@ -30,9 +37,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
 
 enum class TiniNavTab { Metronome, History, Chords, Profiles }
+
+private val StringBronze = Color(0xFFC9A227)
+private val StringBronzeMid = Color(0xFFB8860B)
+private val StringBronzeDark = Color(0xFF8A6A2E)
+private val NeedleDark = Color(0xFF1D1D1F)
 
 /** Almost-full circular dial (open at bottom) with note readout inside the ring. */
 @Composable
@@ -50,7 +63,7 @@ fun CircularAnalogDial(
         animationSpec = spring(dampingRatio = 0.78f, stiffness = 280f),
         label = "dialCents"
     )
-    val accentColor = when {
+    val statusColor = when {
         tuningState == null -> colors.TextSecondary
         isInTune -> colors.AccentGreen
         animatedCents < 0 -> colors.AccentRed
@@ -71,37 +84,24 @@ fun CircularAnalogDial(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(1.05f),
+            .aspectRatio(1.02f),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
             val cx = w / 2f
-            val cy = h * 0.52f
-            val radius = minOf(w, h) * 0.44f
-            val trackW = 18f
+            val cy = h * 0.50f
+            val radius = minOf(w, h) * 0.46f
+            val trackW = 24f
             val arcTopLeft = Offset(cx - radius, cy - radius)
             val arcSize = Size(radius * 2, radius * 2)
-            val arcStart = 135f
-            val arcSweep = 270f
 
-            // Light outer track
-            drawArc(
-                color = colors.Separator.copy(alpha = 0.45f),
-                startAngle = arcStart,
-                sweepAngle = arcSweep,
-                useCenter = false,
-                topLeft = arcTopLeft,
-                size = arcSize,
-                style = Stroke(width = trackW, cap = StrokeCap.Round)
-            )
-
-            fun drawCentZone(c0: Float, c1: Float, color: Color, alpha: Float) {
+            fun drawCentZone(c0: Float, c1: Float, color: Color) {
                 val a0 = centToDialAngle(c0)
                 val a1 = centToDialAngle(c1)
                 drawArc(
-                    color = color.copy(alpha = alpha),
+                    color = color,
                     startAngle = a0,
                     sweepAngle = a1 - a0,
                     useCenter = false,
@@ -111,109 +111,105 @@ fun CircularAnalogDial(
                 )
             }
 
-            drawCentZone(-50f, -8f, colors.AccentRed, 0.85f)
-            drawCentZone(-8f, -4f, colors.AccentOrange, 0.75f)
-            drawCentZone(-4f, 4f, colors.AccentGreen, 0.9f)
-            drawCentZone(4f, 8f, colors.AccentOrange, 0.75f)
-            drawCentZone(8f, 50f, colors.AccentRed, 0.85f)
+            // Saturated track: red sides, green top center
+            drawCentZone(-50f, -7f, colors.AccentRed)
+            drawCentZone(-7f, 7f, colors.AccentGreen)
+            drawCentZone(7f, 50f, colors.AccentRed)
 
-            // Fine tick marks around the ring
-            for (tick in -50..50 step 5) {
-                val rad = Math.toRadians(centToDialAngle(tick.toFloat()).toDouble())
-                val inner = radius - trackW / 2 - 10f
-                val outer = radius + trackW / 2 + (if (tick % 10 == 0) 8f else 4f)
-                val sx = cx + inner * cos(rad).toFloat()
-                val sy = cy + inner * sin(rad).toFloat()
-                val ex = cx + outer * cos(rad).toFloat()
-                val ey = cy + outer * sin(rad).toFloat()
+            // Dense fine ticks along full arc (−50…+50 mapped to 135°…405°)
+            for (centi in -500..500) {
+                val c = centi / 10f
+                val rad = Math.toRadians(centToDialAngle(c).toDouble())
+                val isMajor = (centi % 50 == 0)
+                val isMid = (centi % 10 == 0)
+                val inner = radius - trackW / 2 - (if (isMajor) 14f else if (isMid) 10f else 8f)
+                val outer = radius + trackW / 2 + (if (isMajor) 10f else if (isMid) 6f else 4f)
                 drawLine(
-                    color = colors.TextSecondary.copy(alpha = if (tick == 0) 0.55f else 0.28f),
-                    start = Offset(sx, sy),
-                    end = Offset(ex, ey),
-                    strokeWidth = if (tick == 0) 2.5f else 1.2f,
+                    color = colors.TextPrimary.copy(
+                        alpha = when {
+                            c == 0f -> 0.75f
+                            isMajor -> 0.55f
+                            isMid -> 0.35f
+                            else -> 0.22f
+                        }
+                    ),
+                    start = Offset(cx + inner * cos(rad).toFloat(), cy + inner * sin(rad).toFloat()),
+                    end = Offset(cx + outer * cos(rad).toFloat(), cy + outer * sin(rad).toFloat()),
+                    strokeWidth = when {
+                        c == 0f -> 2.2f
+                        isMajor -> 1.6f
+                        else -> 1f
+                    },
                     cap = StrokeCap.Round
                 )
             }
 
-            // Cent labels at arc ends and top
             listOf(
-                Triple(-50f, "-50", false),
-                Triple(0f, "0", true),
-                Triple(50f, "+50", false)
-            ).forEach { (c, label, emphasize) ->
+                Triple(-50f, "-50", colors.TextSecondary),
+                Triple(0f, "0", if (isInTune) colors.AccentGreen else colors.TextPrimary),
+                Triple(50f, "+50", colors.TextSecondary)
+            ).forEach { (c, label, labelColor) ->
                 val rad = Math.toRadians(centToDialAngle(c).toDouble())
-                val lx = cx + (radius + trackW + 22f) * cos(rad).toFloat()
-                val ly = cy + (radius + trackW + 22f) * sin(rad).toFloat()
+                val lx = cx + (radius + trackW + 26f) * cos(rad).toFloat()
+                val ly = cy + (radius + trackW + 26f) * sin(rad).toFloat()
                 drawIntoCanvas { canvas ->
                     val paint = android.graphics.Paint().apply {
-                        color = (if (emphasize && isInTune) colors.AccentGreen else colors.TextSecondary)
-                            .toArgb()
-                        textSize = if (emphasize) 30f else 24f
+                        color = labelColor.toArgb()
+                        textSize = if (c == 0f) 32f else 26f
                         textAlign = android.graphics.Paint.Align.CENTER
                         isAntiAlias = true
-                        if (emphasize) isFakeBoldText = true
+                        isFakeBoldText = c == 0f
                     }
                     canvas.nativeCanvas.drawText(label, lx, ly + 10f, paint)
                 }
             }
 
-            // Needle from center toward rim
             val needleRad = Math.toRadians(centToDialAngle(animatedCents).toDouble())
-            val tipX = cx + (radius - 6f) * cos(needleRad).toFloat()
-            val tipY = cy + (radius - 6f) * sin(needleRad).toFloat()
+            val tipX = cx + (radius - trackW * 0.35f) * cos(needleRad).toFloat()
+            val tipY = cy + (radius - trackW * 0.35f) * sin(needleRad).toFloat()
             if (tuningState != null) {
-                for (r in listOf(26f, 18f, 12f)) {
-                    drawCircle(
-                        color = accentColor.copy(alpha = 0.08f),
-                        radius = r,
-                        center = Offset(tipX, tipY)
-                    )
-                }
                 drawLine(
-                    color = accentColor,
+                    color = NeedleDark,
                     start = Offset(cx, cy),
                     end = Offset(tipX, tipY),
-                    strokeWidth = 4f,
+                    strokeWidth = 3.2f,
                     cap = StrokeCap.Round
                 )
             }
-            drawCircle(color = colors.Surface, radius = 11f, center = Offset(cx, cy))
-            drawCircle(
-                color = if (tuningState != null) accentColor else colors.Separator,
-                radius = 6.5f,
-                center = Offset(cx, cy)
-            )
+            drawCircle(color = colors.Surface, radius = 13f, center = Offset(cx, cy))
+            drawCircle(color = colors.Separator, radius = 13f, center = Offset(cx, cy), style = Stroke(1.5f))
+            drawCircle(color = NeedleDark, radius = 5f, center = Offset(cx, cy))
         }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier.padding(top = 4.dp)
         ) {
             if (tuningState != null) {
                 Text(
                     text = note ?: "—",
-                    fontSize = 64.sp,
+                    fontSize = 72.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.TextPrimary,
                     fontFamily = InterFont,
-                    letterSpacing = (-1.5).sp,
+                    letterSpacing = (-2).sp,
                     modifier = Modifier.scale(inTuneScale)
                 )
                 if (frequency != null) {
                     Text(
                         text = "%.1f Hz".format(frequency),
-                        fontSize = 16.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.TextSecondary,
                         fontFamily = InterFont
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = statusText,
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = accentColor,
+                    color = statusColor,
                     fontFamily = InterFont
                 )
             } else {
@@ -272,8 +268,7 @@ fun SpectrumWashBackground(
 }
 
 /**
- * Horizontal neck strings — display top→bottom: high string (thin) to low string (thick).
- * Data [selectedIndex] uses index 0 = lowest / thickest string (same as tuning model).
+ * Horizontal neck — top→bottom: İnce E (high) … Kalın E (low). Data index 0 = lowest.
  */
 @Composable
 fun HorizontalNeckStringSelector(
@@ -285,26 +280,21 @@ fun HorizontalNeckStringSelector(
 ) {
     val colors = AppColors
     val dataIndicesTopToBottom = strings.indices.reversed().toList()
-    val thicknessSteps = listOf(1.2f, 1.6f, 2.0f, 2.6f, 3.2f, 4.0f)
-    fun thicknessForDataIndex(dataIndex: Int): Float {
-        val rankFromThin = strings.size - 1 - dataIndex
-        val step = thicknessSteps.getOrElse(rankFromThin) { 2f }
-        return step
-    }
+    val thicknessPxSteps = listOf(1.4f, 2.0f, 2.8f, 3.6f, 4.6f, 5.8f)
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height((strings.size * 26 + 16).dp)
-            .padding(horizontal = 4.dp)
+            .height((strings.size * 32 + 12).dp)
+            .padding(horizontal = 2.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val fretCount = 8
+                val fretCount = 9
                 for (i in 1 until fretCount) {
                     val x = size.width * i / fretCount
                     drawLine(
-                        color = colors.Separator.copy(alpha = 0.35f),
+                        color = colors.Separator.copy(alpha = 0.45f),
                         start = Offset(x, 0f),
                         end = Offset(x, size.height),
                         strokeWidth = 1f
@@ -319,86 +309,59 @@ fun HorizontalNeckStringSelector(
                     val note = strings[dataIndex]
                     val selected = dataIndex == selectedIndex
                     val tuned = selected && isTuned
-                    val label = neckStringLabel(note, dataIndex, strings.size)
-                    val thickness = thicknessForDataIndex(dataIndex).dp
-                    val stringNum = strings.size - dataIndex
+                    val caption = neckCaption(note, dataIndex, strings.size)
+                    val rankFromThin = strings.size - 1 - dataIndex
+                    val strokePx = thicknessPxSteps.getOrElse(rankFromThin) { 2.5f }
+                    val wound = rankFromThin >= 2
 
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(22.dp)
-                            .clickable { onStringSelected(dataIndex) },
-                        verticalAlignment = Alignment.CenterVertically
+                            .clickable { onStringSelected(dataIndex) }
                     ) {
-                        Box(
-                            modifier = Modifier.width(52.dp),
-                            contentAlignment = Alignment.CenterStart
+                        if (caption != null) {
+                            Text(
+                                text = caption,
+                                fontSize = 9.sp,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                                color = if (selected && tuned) colors.AccentGreen
+                                else if (selected) colors.TextPrimary
+                                else colors.TextSecondary.copy(alpha = 0.85f),
+                                fontFamily = InterFont,
+                                modifier = Modifier.padding(start = 4.dp, bottom = 1.dp)
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(26.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (selected) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (tuned) colors.AccentGreen else colors.TextPrimary
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = note.take(2),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        fontFamily = InterFont,
-                                        maxLines = 1
-                                    )
-                                }
-                            } else if (label.contains(" ")) {
-                                Text(
-                                    text = label,
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.TextSecondary.copy(alpha = 0.85f),
-                                    fontFamily = InterFont,
-                                    maxLines = 1
+                            StringNoteBadge(
+                                note = badgeText(note),
+                                selected = selected,
+                                tuned = tuned
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Canvas(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            ) {
+                                val y = size.height / 2f
+                                val startX = 0f
+                                val endX = size.width
+                                drawMetallicGuitarString(
+                                    start = Offset(startX, y),
+                                    end = Offset(endX, y),
+                                    strokeWidth = strokePx,
+                                    wound = wound,
+                                    selected = selected,
+                                    tuned = tuned,
+                                    green = colors.AccentGreen
                                 )
                             }
                         }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(thickness.coerceAtLeast(1.dp))
-                                .drawBehind {
-                                    if (selected) {
-                                        val glowH = size.height + 14f
-                                        drawRoundRect(
-                                            color = colors.AccentGreen.copy(alpha = 0.22f),
-                                            topLeft = Offset(0f, (size.height - glowH) / 2),
-                                            size = Size(size.width, glowH),
-                                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(glowH / 2)
-                                        )
-                                    }
-                                    drawLine(
-                                        color = when {
-                                            tuned -> colors.AccentGreen
-                                            selected -> colors.TextPrimary
-                                            else -> colors.TextSecondary.copy(alpha = 0.55f)
-                                        },
-                                        start = Offset(0f, size.height / 2),
-                                        end = Offset(size.width, size.height / 2),
-                                        strokeWidth = thickness.toPx(),
-                                        cap = StrokeCap.Round
-                                    )
-                                }
-                        )
-                        Text(
-                            text = "$stringNum",
-                            fontSize = 9.sp,
-                            color = colors.TextSecondary.copy(alpha = 0.6f),
-                            fontFamily = InterFont,
-                            modifier = Modifier.width(16.dp),
-                            textAlign = TextAlign.End
-                        )
                     }
                 }
             }
@@ -406,13 +369,145 @@ fun HorizontalNeckStringSelector(
     }
 }
 
-private fun neckStringLabel(note: String, dataIndex: Int, total: Int): String {
+@Composable
+private fun StringNoteBadge(
+    note: String,
+    selected: Boolean,
+    tuned: Boolean
+) {
+    val colors = AppColors
+    val bg = when {
+        selected && tuned -> colors.AccentGreen
+        selected -> colors.TextPrimary
+        else -> colors.Surface
+    }
+    val border = when {
+        selected -> Color.Transparent
+        else -> colors.Separator.copy(alpha = 0.9f)
+    }
+    val textColor = when {
+        selected -> Color.White
+        else -> StringBronzeDark
+    }
+    Box(
+        modifier = Modifier
+            .size(30.dp)
+            .clip(CircleShape)
+            .background(bg)
+            .then(
+                if (!selected) Modifier.border(1.dp, border, CircleShape)
+                else Modifier
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = note,
+            fontSize = if (note.length > 1) 9.sp else 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor,
+            fontFamily = InterFont,
+            maxLines = 1
+        )
+    }
+}
+
+private fun badgeText(note: String): String =
+    if (note.length <= 2) note else note.take(1)
+
+private fun neckCaption(note: String, dataIndex: Int, total: Int): String? {
     val isLowest = dataIndex == 0
     val isHighest = dataIndex == total - 1
     return when {
         isHighest && (note == "E" || note == "Eb") -> if (note == "Eb") "İnce Eb" else "İnce E"
         isLowest && (note == "E" || note == "Eb") -> if (note == "Eb") "Kalın Eb" else "Kalın E"
-        else -> note
+        else -> null
+    }
+}
+
+private fun DrawScope.drawMetallicGuitarString(
+    start: Offset,
+    end: Offset,
+    strokeWidth: Float,
+    wound: Boolean,
+    selected: Boolean,
+    tuned: Boolean,
+    green: Color
+) {
+    val length = hypot(end.x - start.x, end.y - start.y)
+    if (selected) {
+        val glowH = strokeWidth + 18f
+        drawRoundRect(
+            color = green.copy(alpha = if (tuned) 0.28f else 0.18f),
+            topLeft = Offset(start.x, start.y - glowH / 2),
+            size = Size(length, glowH),
+            cornerRadius = CornerRadius(glowH / 2)
+        )
+    }
+
+    val bronzeBrush = Brush.horizontalGradient(
+        colors = listOf(
+            StringBronzeDark.copy(alpha = 0.85f),
+            StringBronze,
+            StringBronzeMid,
+            StringBronze,
+            StringBronzeDark.copy(alpha = 0.85f)
+        ),
+        startX = start.x,
+        endX = end.x
+    )
+
+    drawLine(
+        brush = bronzeBrush,
+        start = start,
+        end = end,
+        strokeWidth = strokeWidth,
+        cap = StrokeCap.Round
+    )
+
+    if (wound) {
+        val coilSpacing = 5.5f
+        val steps = (length / coilSpacing).toInt().coerceAtLeast(1)
+        val dx = (end.x - start.x) / length
+        val dy = (end.y - start.y) / length
+        val px = -dy
+        val py = dx
+        for (i in 0 until steps) {
+            if (i % 2 == 0) continue
+            val t = (i + 0.5f) * coilSpacing
+            if (t > length) break
+            val cx = start.x + dx * t
+            val cy = start.y + dy * t
+            val markLen = strokeWidth * 1.1f
+            drawLine(
+                color = StringBronzeDark.copy(alpha = if (selected) 0.75f else 0.55f),
+                start = Offset(cx - px * markLen, cy - py * markLen),
+                end = Offset(cx + px * markLen, cy + py * markLen),
+                strokeWidth = 1.1f,
+                cap = StrokeCap.Round
+            )
+        }
+        for (i in 0 until steps) {
+            if (i % 2 != 0) continue
+            val t = i * coilSpacing
+            if (t > length) break
+            val cx = start.x + dx * t
+            val cy = start.y + dy * t
+            drawLine(
+                color = Color.White.copy(alpha = if (selected) 0.35f else 0.22f),
+                start = Offset(cx, cy - strokeWidth * 0.35f),
+                end = Offset(cx, cy + strokeWidth * 0.35f),
+                strokeWidth = 0.8f,
+                cap = StrokeCap.Round
+            )
+        }
+    } else {
+        drawLine(
+            color = Color.White.copy(alpha = 0.25f),
+            start = Offset(start.x, start.y - strokeWidth * 0.25f),
+            end = Offset(end.x, end.y - strokeWidth * 0.25f),
+            strokeWidth = 1f,
+            cap = StrokeCap.Round
+        )
     }
 }
 
@@ -431,7 +526,7 @@ fun TiniBottomNavBar(
             .fillMaxWidth()
             .navigationBarsPadding(),
         color = colors.Surface,
-        shadowElevation = 8.dp,
+        shadowElevation = 6.dp,
         tonalElevation = 0.dp
     ) {
         Row(
@@ -440,10 +535,10 @@ fun TiniBottomNavBar(
                 .padding(vertical = 10.dp, horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            TiniNavItem("Metronom", Icons.Default.Timer, onMetronomeClick, selectedTab == TiniNavTab.Metronome)
-            TiniNavItem("Geçmiş", Icons.Default.History, onHistoryClick, selectedTab == TiniNavTab.History)
-            TiniNavItem("Akorlar", Icons.Default.LibraryMusic, onChordsClick, selectedTab == TiniNavTab.Chords)
-            TiniNavItem("Profil", Icons.Default.Person, onProfilesClick, selectedTab == TiniNavTab.Profiles)
+            TiniNavItem("Metronom", Icons.Outlined.Timer, onMetronomeClick, selectedTab == TiniNavTab.Metronome)
+            TiniNavItem("Geçmiş", Icons.Outlined.History, onHistoryClick, selectedTab == TiniNavTab.History)
+            TiniNavItem("Akorlar", Icons.Outlined.LibraryMusic, onChordsClick, selectedTab == TiniNavTab.Chords)
+            TiniNavItem("Profil", Icons.Outlined.Person, onProfilesClick, selectedTab == TiniNavTab.Profiles)
         }
     }
 }
@@ -456,7 +551,7 @@ private fun TiniNavItem(
     selected: Boolean
 ) {
     val colors = AppColors
-    val iconTint = if (selected) colors.AccentBlue else colors.TextPrimary
+    val iconTint = if (selected) colors.AccentBlue else colors.TextSecondary
     val labelColor = if (selected) colors.AccentBlue else colors.TextSecondary
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
