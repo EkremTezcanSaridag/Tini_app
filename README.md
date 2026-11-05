@@ -67,6 +67,7 @@
   - **Otomatik:** Çaldığınız teli otomatik algılar
   - **Manuel:** İstediğiniz teli seçip akort edin
 - **📳 Haptik Geri Bildirim:** Akort tamamlandığında titreşim
+- **🔔 Akort sesi (v4.0):** Tel akort aralığına **girdiği** anda kısa onay tık sesi (tekrar etmez; tekrar pes/tiz olup yeniden akort olunca yine çalar)
 - **🎨 Minimal Arayüz:** Apple tarzı temiz ve modern tasarım
 - **📊 Gerçek Zamanlı Gösterge:** 
   - Büyük not gösterimi (örn: E2, A2, D3)
@@ -259,7 +260,11 @@ Tini_app/
 - [x] Ses/akort profili kaydetme ve paylaşma (JSON)
 - [x] Bas gitar ve ukulele desteği
 
-### v3.9 ✅ (Mevcut Sürüm)
+### v4.0 ✅ (Mevcut Sürüm)
+- [x] Tel **akort** olduğu anda kısa onay sesi (tik/ding); yalnızca in-tune **giriş** kenarında, metronom sesleri değil
+- [x] v3.9 arayüzü aynı (kadran, dairesel tel seçici, Teli sık + / Teli gevşet −)
+
+### v3.9 ✅
 - [x] Kadran durum metni: pes/tiz yerine **Teli sık +** / **Teli gevşet −** (gevşetme/sıkma yönlendirmesi); **Akortlu** ve **Teli çalın** aynı
 
 ### v3.8 ✅
@@ -344,7 +349,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.9  
+**Versiyon:** 4.0  
 **Son Güncelleme:** 5 Kasım 2026
 
 </div>

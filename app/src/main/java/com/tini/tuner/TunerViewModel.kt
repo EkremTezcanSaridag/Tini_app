@@ -1,6 +1,7 @@
 package com.tini.tuner
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,12 +24,20 @@ data class TunerUiState(
     val polyphonicMode: Boolean = false
 )
 
-class TunerViewModel : ViewModel() {
+class TunerViewModel(application: Application) : AndroidViewModel(application) {
     
     private val _uiState = MutableStateFlow(TunerUiState())
     val uiState: StateFlow<TunerUiState> = _uiState.asStateFlow()
     
     private val audioCapture = AudioCapture()
+    private val inTuneChime = InTuneChimePlayer(application)
+    /** Latch: true while the current stretch is in the ±5 cent window (edge = false→true). */
+    private var inTuneLatched = false
+    /** Minimum gap between chimes to ignore boundary jitter. */
+    private var lastInTuneChimeAtMs = 0L
+    private companion object {
+        const val MIN_CHIME_GAP_MS = 450L
+    }
     private var captureJob: Job? = null
     private var historyRepository: TuningHistoryRepository? = null
     private var lastInTuneTime: Long = 0
@@ -58,6 +67,7 @@ class TunerViewModel : ViewModel() {
                     processFrequency(smoothedFrequency!!, frame)
                 } else {
                     smoothedFrequency = null
+                    resetInTuneLatch()
                     _uiState.value = _uiState.value.copy(
                         tuningState = null,
                         detectedFrequency = null,
@@ -81,6 +91,30 @@ class TunerViewModel : ViewModel() {
             tuningState = null,
             detectedFrequency = null
         )
+        resetInTuneLatch()
+    }
+
+    /** Edge-triggered chime: entering in-tune only (not idle, not while staying in tune). */
+    private fun onTuningStateUpdated(tuningState: TuningState?) {
+        if (tuningState == null) {
+            resetInTuneLatch()
+            return
+        }
+        val inTune = tuningState.isInTune
+        if (inTune && !inTuneLatched) {
+            val now = System.currentTimeMillis()
+            if (now - lastInTuneChimeAtMs >= MIN_CHIME_GAP_MS) {
+                inTuneChime.play()
+                lastInTuneChimeAtMs = now
+            }
+            inTuneLatched = true
+        } else if (!inTune) {
+            inTuneLatched = false
+        }
+    }
+
+    private fun resetInTuneLatch() {
+        inTuneLatched = false
     }
     
     private fun processFrequency(frequency: Float, frame: AudioFrame) {
@@ -126,6 +160,8 @@ class TunerViewModel : ViewModel() {
                 }
             }
         }
+        
+        onTuningStateUpdated(tuningState)
         
         _uiState.value = _uiState.value.copy(
             tuningState = tuningState,
@@ -194,6 +230,7 @@ class TunerViewModel : ViewModel() {
     
     override fun onCleared() {
         super.onCleared()
+        inTuneChime.release()
         stopListening()
     }
 }
