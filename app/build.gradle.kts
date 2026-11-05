@@ -13,8 +13,8 @@ android {
         applicationId = "com.tini.tuner"
         minSdk = 24
         targetSdk = 34
-        versionCode = 15
-        versionName = "3.8"
+        versionCode = 16
+        versionName = "3.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

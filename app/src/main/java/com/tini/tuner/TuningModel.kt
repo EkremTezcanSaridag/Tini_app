@@ -53,6 +53,19 @@ enum class TuningDirection {
     TOO_HIGH
 }
 
+/** User-facing dial / widget / history guidance (replaces Pes/Tiz). */
+fun tuningStatusLabel(direction: TuningDirection): String = when (direction) {
+    TuningDirection.TOO_LOW -> "Teli sık +"
+    TuningDirection.TOO_HIGH -> "Teli gevşet −"
+    TuningDirection.IN_TUNE -> "Akortlu"
+}
+
+fun tuningStatusLabelFromCents(cents: Float, wasInTune: Boolean): String = when {
+    wasInTune -> "Akortlu"
+    cents < 0 -> "Teli sık +"
+    else -> "Teli gevşet −"
+}
+
 object TuningUtils {
     
     fun frequencyToCents(frequency: Float, targetFrequency: Float): Float {

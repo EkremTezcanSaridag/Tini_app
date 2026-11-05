@@ -73,12 +73,7 @@ fun CircularAnalogDial(
         animatedCents < 0 -> colors.AccentRed
         else -> colors.AccentOrange
     }
-    val statusText = when (tuningState?.direction) {
-        TuningDirection.TOO_LOW -> "Pes"
-        TuningDirection.TOO_HIGH -> "Tiz"
-        TuningDirection.IN_TUNE -> "Akortlu"
-        null -> ""
-    }
+    val statusText = tuningState?.direction?.let(::tuningStatusLabel) ?: ""
     val inTuneScale by animateFloatAsState(
         targetValue = if (isInTune) 1.03f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
@@ -214,10 +209,11 @@ fun CircularAnalogDial(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = statusText,
-                    fontSize = 20.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = statusColor,
-                    fontFamily = InterFont
+                    fontFamily = InterFont,
+                    maxLines = 1
                 )
             } else {
                 Text(

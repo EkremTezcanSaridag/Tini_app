@@ -20,14 +20,14 @@
 <table>
   <tr>
     <td><img src="docs/screenshots/in_tune.png" width="220" alt="Akortlu"/></td>
-    <td><img src="docs/screenshots/too_low.png" width="220" alt="Pest"/></td>
-    <td><img src="docs/screenshots/too_high.png" width="220" alt="Tiz"/></td>
+    <td><img src="docs/screenshots/too_low.png" width="220" alt="Teli sık +"/></td>
+    <td><img src="docs/screenshots/too_high.png" width="220" alt="Teli gevşet −"/></td>
     <td><img src="docs/screenshots/permission.png" width="220" alt="İzin Ekranı"/></td>
   </tr>
   <tr>
     <td align="center"><b>Akortlu (0 cent)</b></td>
-    <td align="center"><b>Pest (-25 cent)</b></td>
-    <td align="center"><b>Tiz (+30 cent)</b></td>
+    <td align="center"><b>Teli sık + (−25 cent)</b></td>
+    <td align="center"><b>Teli gevşet − (+30 cent)</b></td>
     <td align="center"><b>Mikrofon İzni</b></td>
   </tr>
   <tr>
@@ -81,8 +81,8 @@
 **Cent**, müzikte kullanılan logaritmik bir frekans ölçü birimidir. İki nota arasındaki mesafe 100 cent'tir.
 
 - **0 cent:** Tam akortlu
-- **Negatif değer (örn: -25 cent):** Pest (teli gerdirmeniz gerekiyor)
-- **Pozitif değer (örn: +30 cent):** Tiz (teli gevşetmeniz gerekiyor)
+- **Negatif değer (örn: -25 cent):** **Teli sık +** (tel pes — gerdirmeniz gerekir)
+- **Pozitif değer (örn: +30 cent):** **Teli gevşet −** (tel tiz — gevşetmeniz gerekir)
 
 Tını, **±5 cent** toleransla akordunuzu kontrol eder. Bu hassasiyet profesyonel müzisyenler için yeterlidir.
 
@@ -259,7 +259,10 @@ Tini_app/
 - [x] Ses/akort profili kaydetme ve paylaşma (JSON)
 - [x] Bas gitar ve ukulele desteği
 
-### v3.8 ✅ (Mevcut Sürüm)
+### v3.9 ✅ (Mevcut Sürüm)
+- [x] Kadran durum metni: pes/tiz yerine **Teli sık +** / **Teli gevşet −** (gevşetme/sıkma yönlendirmesi); **Akortlu** ve **Teli çalın** aynı
+
+### v3.8 ✅
 - [x] Yatay champagne tel listesi kaldırıldı; onaylı mockup: dairesel E–A–D–G–B–E seçici (6–1 numaralar, seçili siyah dolu daire)
 - [x] Üstte v3.7 analog kadran (başlık boşluğu + clipToBounds) aynı kaldı
 
@@ -341,7 +344,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.8  
+**Versiyon:** 3.9  
 **Son Güncelleme:** 5 Kasım 2026
 
 </div>

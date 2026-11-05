@@ -147,7 +147,7 @@ fun HistoryEntryCard(entry: TuningHistoryEntry) {
                     fontFamily = InterFont
                 )
                 Text(
-                    text = if (entry.wasInTune) "Akortlu" else if (entry.cents < 0) "Pest" else "Tiz",
+                    text = tuningStatusLabelFromCents(entry.cents, entry.wasInTune),
                     fontSize = 12.sp,
                     color = AppColors.TextSecondary,
                     fontFamily = InterFont

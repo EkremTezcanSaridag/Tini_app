@@ -99,7 +99,7 @@ class MainActivity : ComponentActivity() {
                             TiniWidgetPrefs.update(
                                 this@MainActivity,
                                 state.note,
-                                if (state.isInTune) "Akortlu" else if (state.cents < 0) "Pest" else "Tiz",
+                                tuningStatusLabelFromCents(state.cents, state.isInTune),
                                 state.cents
                             )
                         }
