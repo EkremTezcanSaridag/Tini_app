@@ -98,7 +98,7 @@ fun TunerScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(0.38f),
                 contentAlignment = Alignment.Center
             ) {
                 PremiumTunerDisplay(
@@ -121,14 +121,14 @@ fun TunerScreen(
                 )
             }
 
-            HorizontalNeckStringSelector(
+            HeadstockStringPicker(
                 strings = getStringNames(uiState.currentTuning),
                 selectedIndex = uiState.selectedStringIndex,
                 isTuned = uiState.tuningState?.isInTune == true,
                 onStringSelected = onStringSelected
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

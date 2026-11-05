@@ -5,8 +5,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,24 +24,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.cos
@@ -44,10 +43,6 @@ import kotlin.math.sin
 
 enum class TiniNavTab { Metronome, History, Chords, Profiles }
 
-private val WireEdge = Color(0xFF9A886C)
-private val WireBody = Color(0xFFC9B08A)
-private val WireShine = Color(0xFFE8D5B0)
-private val WireSpec = Color(0xFFFDFBF7)
 private val NeedleDark = Color(0xFF1D1D1F)
 
 /** Almost-full circular dial (open at bottom) with note readout inside the ring. */
@@ -270,119 +265,98 @@ fun SpectrumWashBackground(
     }
 }
 
-private val WireCoilShadow = Color(0xFF8A7558)
+private data class StringPickerCell(
+    val dataIndex: Int,
+    @DrawableRes val imageRes: Int,
+    val label: String
+)
 
-/** Slim wire diameters (dp): thinnest high string → thickest low E (~2.5× ratio, not a bar). */
-private fun stringDiameterDp(rankFromThin: Int, stringCount: Int): Dp {
-    val presets = listOf(2.5f, 3f, 3.5f, 4.5f, 5f, 6.5f)
-    if (stringCount <= 1) return presets.first().dp
-    val idx = (rankFromThin.toFloat() / (stringCount - 1) * presets.lastIndex).toInt()
-        .coerceIn(0, presets.lastIndex)
-    return presets[idx].dp
+private val sixStringCloseups = listOf(
+    R.drawable.string_closeup_ince_e,
+    R.drawable.string_closeup_b,
+    R.drawable.string_closeup_g,
+    R.drawable.string_closeup_d,
+    R.drawable.string_closeup_a,
+    R.drawable.string_closeup_kalin_e
+)
+
+private fun stringPickerLabel(note: String, dataIndex: Int, total: Int): String {
+    val isLowest = dataIndex == 0
+    val isHighest = dataIndex == total - 1
+    return when {
+        isHighest && (note == "E" || note == "Eb") -> if (note == "Eb") "İnce Eb" else "İnce E"
+        isLowest && (note == "E" || note == "Eb") -> if (note == "Eb") "Kalın Eb" else "Kalın E"
+        else -> note
+    }
 }
 
-private fun rowHeightForString(diameterDp: Dp, hasCaption: Boolean): Dp {
-    val base = diameterDp + 12.dp
-    return if (hasCaption) base + 11.dp else base
+private fun buildStringPickerCells(strings: List<String>): List<StringPickerCell> {
+    val drawables = sixStringCloseups
+    if (strings.size == 6) {
+        val order = listOf(5, 4, 3, 2, 1, 0)
+        return order.mapIndexed { i, dataIndex ->
+            StringPickerCell(
+                dataIndex = dataIndex,
+                imageRes = drawables[i],
+                label = stringPickerLabel(strings[dataIndex], dataIndex, strings.size)
+            )
+        }
+    }
+    return strings.indices.reversed().map { dataIndex ->
+        val rank = strings.size - 1 - dataIndex
+        val drawableIdx = (rank.toFloat() / (strings.size - 1).coerceAtLeast(1) * drawables.lastIndex)
+            .toInt().coerceIn(0, drawables.lastIndex)
+        StringPickerCell(
+            dataIndex = dataIndex,
+            imageRes = drawables[drawableIdx],
+            label = stringPickerLabel(strings[dataIndex], dataIndex, strings.size)
+        )
+    }
 }
 
-/**
- * Horizontal neck — top→bottom: İnce E (high) … Kalın E (low). Data index 0 = lowest.
- */
+/** Headstock illustration + 2×3 circular string sample pickers (mockup D). */
 @Composable
-fun HorizontalNeckStringSelector(
+fun HeadstockStringPicker(
     strings: List<String>,
     selectedIndex: Int,
     isTuned: Boolean,
     onStringSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = AppColors
-    val dataIndicesTopToBottom = strings.indices.reversed().toList()
-    val rowHeights = dataIndicesTopToBottom.map { dataIndex ->
-        val rank = strings.size - 1 - dataIndex
-        val caption = neckCaption(strings[dataIndex], dataIndex, strings.size)
-        rowHeightForString(stringDiameterDp(rank, strings.size), caption != null)
-    }
-    val totalHeight = rowHeights.fold(0.dp) { acc, h -> acc + h } + 6.dp
+    val cells = buildStringPickerCells(strings)
+    val columns = if (strings.size == 6) 3 else 3
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(totalHeight.coerceAtLeast(188.dp))
-            .padding(horizontal = 2.dp, vertical = 4.dp)
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val fretCount = 9
-                for (i in 1 until fretCount) {
-                    val x = size.width * i / fretCount
-                    drawLine(
-                        color = colors.Separator.copy(alpha = 0.45f),
-                        start = Offset(x, 0f),
-                        end = Offset(x, size.height),
-                        strokeWidth = 1f
-                    )
-                }
-            }
-            Column(modifier = Modifier.fillMaxSize()) {
-                dataIndicesTopToBottom.forEachIndexed { rowIndex, dataIndex ->
-                    val note = strings[dataIndex]
-                    val selected = dataIndex == selectedIndex
-                    val tuned = selected && isTuned
-                    val caption = neckCaption(note, dataIndex, strings.size)
-                    val rankFromThin = strings.size - 1 - dataIndex
-                    val diameterDp = stringDiameterDp(rankFromThin, strings.size)
-                    val wound = rankFromThin >= 2
+        Image(
+            painter = painterResource(R.drawable.headstock_tuners),
+            contentDescription = "Gitar burgu",
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp)
+                .heightIn(max = 108.dp),
+            contentScale = ContentScale.FillWidth
+        )
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(rowHeights[rowIndex])
-                            .clickable { onStringSelected(dataIndex) }
-                    ) {
-                        if (caption != null) {
-                            Text(
-                                text = caption,
-                                fontSize = 9.sp,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                                color = if (selected && tuned) colors.AccentGreen
-                                else if (selected) colors.TextPrimary
-                                else colors.TextSecondary.copy(alpha = 0.85f),
-                                fontFamily = InterFont,
-                                modifier = Modifier.padding(start = 4.dp, bottom = 1.dp)
-                            )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            StringNoteBadge(
-                                note = badgeText(note),
-                                selected = selected,
-                                tuned = tuned
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Canvas(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                            ) {
-                                drawSlimMetalStringWire(
-                                    left = 0f,
-                                    right = size.width,
-                                    centerY = size.height / 2f,
-                                    diameterPx = diameterDp.toPx(),
-                                    wound = wound,
-                                    selected = selected,
-                                    tuned = tuned,
-                                    green = colors.AccentGreen
-                                )
-                            }
-                        }
-                    }
+        Spacer(modifier = Modifier.height(6.dp))
+
+        cells.chunked(columns).forEach { row ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Top
+            ) {
+                row.forEach { cell ->
+                    StringSampleCircle(
+                        cell = cell,
+                        selected = cell.dataIndex == selectedIndex,
+                        tuned = cell.dataIndex == selectedIndex && isTuned,
+                        onClick = { onStringSelected(cell.dataIndex) }
+                    )
                 }
             }
         }
@@ -390,143 +364,69 @@ fun HorizontalNeckStringSelector(
 }
 
 @Composable
-private fun StringNoteBadge(
-    note: String,
-    selected: Boolean,
-    tuned: Boolean
-) {
-    val colors = AppColors
-    val bg = when {
-        selected && tuned -> colors.AccentGreen
-        selected -> colors.TextPrimary
-        else -> colors.Surface
-    }
-    val border = when {
-        selected -> Color.Transparent
-        else -> colors.Separator.copy(alpha = 0.9f)
-    }
-    val textColor = when {
-        selected -> Color.White
-        else -> colors.TextPrimary
-    }
-    Box(
-        modifier = Modifier
-            .size(30.dp)
-            .clip(CircleShape)
-            .background(bg)
-            .then(
-                if (!selected) Modifier.border(1.dp, border, CircleShape)
-                else Modifier
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = note,
-            fontSize = if (note.length > 1) 9.sp else 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = textColor,
-            fontFamily = InterFont,
-            maxLines = 1
-        )
-    }
-}
-
-private fun badgeText(note: String): String =
-    if (note.length <= 2) note else note.take(1)
-
-private fun neckCaption(note: String, dataIndex: Int, total: Int): String? {
-    val isLowest = dataIndex == 0
-    val isHighest = dataIndex == total - 1
-    return when {
-        isHighest && (note == "E" || note == "Eb") -> if (note == "Eb") "İnce Eb" else "İnce E"
-        isLowest && (note == "E" || note == "Eb") -> if (note == "Eb") "Kalın Eb" else "Kalın E"
-        else -> null
-    }
-}
-
-private fun DrawScope.drawSlimMetalStringWire(
-    left: Float,
-    right: Float,
-    centerY: Float,
-    diameterPx: Float,
-    wound: Boolean,
+private fun StringSampleCircle(
+    cell: StringPickerCell,
     selected: Boolean,
     tuned: Boolean,
-    green: Color
+    onClick: () -> Unit
 ) {
-    val h = diameterPx.coerceIn(2f, 22f)
-    val top = centerY - h / 2f
-    val width = (right - left).coerceAtLeast(1f)
-    val corner = CornerRadius(h / 2f, h / 2f)
-
-    if (selected) {
-        val bloom = if (tuned) 0.14f else 0.10f
-        listOf(8f, 5f, 3f).forEach { pad ->
-            drawRoundRect(
-                color = green.copy(alpha = bloom * (8f / pad)),
-                topLeft = Offset(left, centerY - (h + pad) / 2f),
-                size = Size(width, h + pad),
-                cornerRadius = CornerRadius((h + pad) / 2f)
-            )
-        }
+    val colors = AppColors
+    val ringColor = when {
+        selected && tuned -> colors.AccentGreen
+        selected -> colors.TextPrimary
+        else -> Color.Transparent
     }
-
-    drawRoundRect(
-        brush = Brush.verticalGradient(
-            colorStops = arrayOf(
-                0f to WireEdge.copy(alpha = 0.65f),
-                0.25f to WireBody,
-                0.45f to WireShine,
-                0.5f to WireSpec,
-                0.55f to WireShine,
-                0.75f to WireBody,
-                1f to WireEdge.copy(alpha = 0.65f)
-            ),
-            startY = top,
-            endY = top + h
-        ),
-        topLeft = Offset(left, top),
-        size = Size(width, h),
-        cornerRadius = corner
-    )
-
-    drawLine(
-        color = Color.White.copy(alpha = 0.75f),
-        start = Offset(left + width * 0.04f, centerY),
-        end = Offset(left + width * 0.96f, centerY),
-        strokeWidth = (h * 0.22f).coerceAtLeast(0.6f),
-        cap = StrokeCap.Round
-    )
-
-    if (wound) {
-        val clip = Path().apply {
-            addRoundRect(
-                androidx.compose.ui.geometry.RoundRect(
-                    left = left,
-                    top = top,
-                    right = left + width,
-                    bottom = top + h,
-                    cornerRadius = corner
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(96.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(82.dp)
+                .then(
+                    if (selected) {
+                        Modifier.shadow(
+                            elevation = 10.dp,
+                            shape = CircleShape,
+                            ambientColor = colors.AccentGreen.copy(alpha = 0.45f),
+                            spotColor = colors.AccentGreen.copy(alpha = 0.35f)
+                        )
+                    } else Modifier
                 )
+                .border(
+                    width = if (selected) 3.dp else 1.dp,
+                    color = if (selected) ringColor else colors.Separator.copy(alpha = 0.6f),
+                    shape = CircleShape
+                )
+                .clip(CircleShape)
+                .background(colors.Surface)
+        ) {
+            Image(
+                painter = painterResource(cell.imageRes),
+                contentDescription = cell.label,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(6.dp),
+                contentScale = ContentScale.Crop
             )
         }
-        clipPath(clip) {
-            val pitch = 1.65f
-            var x = left
-            var n = 0
-            while (x < left + width) {
-                drawLine(
-                    color = if (n % 2 == 0) WireCoilShadow.copy(alpha = 0.22f)
-                    else Color.White.copy(alpha = 0.16f),
-                    start = Offset(x, top + 1f),
-                    end = Offset(x, top + h - 1f),
-                    strokeWidth = 0.55f,
-                    cap = StrokeCap.Round
-                )
-                x += pitch
-                n++
-            }
-        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = cell.label,
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = when {
+                selected && tuned -> colors.AccentGreen
+                selected -> colors.TextPrimary
+                else -> colors.TextSecondary
+            },
+            fontFamily = InterFont,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
     }
 }
 

@@ -39,7 +39,7 @@
   <tr>
     <td align="center"><b>Metronom</b></td>
     <td align="center"><b>Akor Kütüphanesi</b></td>
-    <td align="center"><b>Yatay tel seçici (kadran)</b></td>
+    <td align="center"><b>Burgu + tel daireleri</b></td>
     <td></td>
   </tr>
 </table>
@@ -259,7 +259,10 @@ Tini_app/
 - [x] Ses/akort profili kaydetme ve paylaşma (JSON)
 - [x] Bas gitar ve ukulele desteği
 
-### v3.5 ✅ (Mevcut Sürüm)
+### v3.6 ✅ (Mevcut Sürüm)
+- [x] Mockup D: burgu illüstrasyonu + 2×3 dairesel tel örnekleri (bitmap), yatay tel listesi kaldırıldı
+
+### v3.5 ✅
 - [x] İnce champagne tel telleri (2.5–6.5dp), merkez highlight, ince sargı çizgileri; her satırda rozet
 
 ### v3.4 ✅
@@ -330,7 +333,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ---
 
 **Geliştirici:** [Ekrem Tezcan Sarıdağ](https://github.com/EkremTezcanSaridag)  
-**Versiyon:** 3.5  
+**Versiyon:** 3.6  
 **Son Güncelleme:** 5 Kasım 2026
 
 </div>
